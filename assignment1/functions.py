@@ -17,8 +17,9 @@ def MiniBatchGD(X, Y, GDparams, W, b, lambda_reg):
             batch_Y = Y[:, batch[0]:batch[1]]
             P = forward_pass(batch_X, W, b)
             del_w, del_b = ComputeGradients(batch_X, batch_Y, P, W, lambda_reg)
-            W = W + eta * del_w
-            b = b + eta * del_b
+            W = W - eta * del_w
+            b = b - eta * del_b
+        print(ComputeCost(X, Y, W, b, lambda_reg))
     return W, b
 
 
@@ -47,7 +48,7 @@ def ComputeCost(X, Y, W, b, lambda_reg):
     assert X.shape[1] == Y.shape[1]
     reg_term = lambda_reg * np.sum(W ** 2)
     predictions = forward_pass(X, W, b)
-    ce_term = - (Y * np.log(predictions)).sum(axis=0).mean()
+    ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
     total_cost = ce_term + reg_term
     return total_cost
 
