@@ -27,16 +27,21 @@ def combine_train_sets():
 
 
 train_X, train_Y, train_y = combine_train_sets()
+train_X = normalize(train_X)
+test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+test_X = normalize(test_X)
 K = train_Y.shape[0]
 d = train_X.shape[0]
 W = initialize_W((K, d))
 b = initialize_b((K, 1))
-X = normalize(train_X)
 n_batch = 100
 eta = 0.001
 n_epochs = 40
 GDparams = [n_batch, eta, n_epochs]
-test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
-test_X = normalize(test_X)
+W, b, train_cost, val_cost = MiniBatchGD(train_X, train_Y, test_X, test_Y, GDparams, W, b, 0)
 montage(W)
+print("train cost")
+print(train_cost)
+print("val cost")
+print(val_cost)
 print(ComputeAccuracy(test_X, test_y, W, b))
