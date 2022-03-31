@@ -1,7 +1,26 @@
 import numpy as np
+from sklearn.utils import shuffle
 
 
 # Implemented functions
+
+def MiniBatchGD(X, Y, GDparams, W, b, lambda_reg):
+    n_batch, eta, n_epochs = GDparams
+    n_batches = list(range(int(X.shape[1] / n_batch)))
+    batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in n_batches]
+    for epoch in range(n_epochs):
+        X, Y = shuffle(X.T, Y.T)
+        X = X.T
+        Y = Y.T
+        for batch in batches:
+            batch_X = X[:, batch[0]:batch[1]]
+            batch_Y = Y[:, batch[0]:batch[1]]
+            P = forward_pass(batch_X, W, b)
+            del_w, del_b = ComputeGradients(batch_X, batch_Y, P, W, lambda_reg)
+            W = W + eta * del_w
+            b = b + eta * del_b
+    return W, b
+
 
 def forward_pass(X, W, b):
     s = W @ X + b

@@ -24,21 +24,13 @@ def initialize_b(shape):
     return np.random.normal(0, .01, shape)
 
 
-
-
-
 X, Y, y = unpack_batch(LoadBatch('data_batch_1'))
 K = Y.shape[0]
 d = X.shape[0]
 W = initialize_W((K, d))
 b = initialize_b((K, 1))
-
 X = normalize(X)
-pred = forward_pass(X[:, :1], W, b)
-ComputeCost(X[:, :5], Y[:, :5], W, b, 0.1)
-ComputeAccuracy(X, y, W, b)
-analytical_w, analytical_b = ComputeGradients(X[:, :1], Y[:, :1], pred, W, 0)
-numerical_w, numerical_b = ComputeGradsNum(X[:, :1], Y[:, :1], pred, W, b, 0, 1e-6)
+
 
 val_batch = LoadBatch('data_batch_2')
 test_batch = LoadBatch('test_batch')
