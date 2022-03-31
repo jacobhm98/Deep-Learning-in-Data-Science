@@ -45,6 +45,12 @@ def ComputeAccuracy(X, y, W, b):
     return correct / len(y)
 
 def ComputeGradients(X, Y, P, W, b, lambda_reg):
+    assert P.shape[1] == X.shape[1] == Y.shape[1]
+    n = X.shape[1]
+    G = -(Y - P)
+    del_w = (1/n * (G @ X.T)) + (2 * lambda_reg * W)
+    del_b = 1/n * (G @ np.eye(n))
+    return del_w, del_b
 
 
 
@@ -55,9 +61,10 @@ W = initialize_W((K, d))
 b = initialize_b((K, 1))
 
 X = normalize(X)
-pred = forward_pass(X[:, :100], W, b)
+pred = forward_pass(X[:, :5], W, b)
 ComputeCost(X[:, :5], Y[:, :5], W, b, 0.1)
 ComputeAccuracy(X, y, W, b)
+ComputeGradients(X[:, :5], Y[:, :5], pred, W, b, 0.1)
 
 val_batch = LoadBatch('data_batch_2')
 test_batch = LoadBatch('test_batch')
