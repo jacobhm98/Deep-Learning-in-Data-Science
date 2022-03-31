@@ -1,6 +1,39 @@
 import numpy as np
 
 
+# Implemented functions
+
+def forward_pass(X, W, b):
+    s = W @ X + b
+    return softmax(s)
+
+
+def ComputeAccuracy(X, y, W, b):
+    assert len(y) == X.shape[1]
+    predictions = np.argmax(forward_pass(X, W, b), axis=0)
+    correct = (predictions == y).sum()
+    return correct / len(y)
+
+
+def ComputeGradients(X, Y, P, W, lambda_reg):
+    assert P.shape[1] == X.shape[1] == Y.shape[1]
+    n = X.shape[1]
+    G = -(Y - P)
+    del_w = (1 / n * (G @ X.T)) + (2 * lambda_reg * W)
+    del_b = 1 / n * (G @ np.ones((n, 1)))
+    return del_w, del_b
+
+
+def ComputeCost(X, Y, W, b, lambda_reg):
+    assert X.shape[1] == Y.shape[1]
+    reg_term = lambda_reg * np.sum(W ** 2)
+    predictions = forward_pass(X, W, b)
+    ce_term = - (Y * np.log(predictions)).sum(axis=0).mean()
+    total_cost = ce_term + reg_term
+    return total_cost
+
+
+# Given functions
 def softmax(x):
     """ Standard definition of the softmax function """
     return np.exp(x) / np.sum(np.exp(x), axis=0)

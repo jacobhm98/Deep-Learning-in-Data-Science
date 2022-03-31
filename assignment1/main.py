@@ -24,33 +24,6 @@ def initialize_b(shape):
     return np.random.normal(0, .01, shape)
 
 
-def forward_pass(X, W, b):
-    s = W @ X + b
-    return softmax(s)
-
-
-def ComputeCost(X, Y, W, b, lambda_reg):
-    assert X.shape[1] == Y.shape[1]
-    reg_term = lambda_reg * np.sum(W ** 2)
-    predictions = forward_pass(X, W, b)
-    ce_term = - (Y * np.log(predictions)).sum(axis=0).mean()
-    total_cost = ce_term + reg_term
-    return total_cost
-
-
-def ComputeAccuracy(X, y, W, b):
-    assert len(y) == X.shape[1]
-    predictions = np.argmax(forward_pass(X, W, b), axis=0)
-    correct = (predictions == y).sum()
-    return correct / len(y)
-
-def ComputeGradients(X, Y, P, W, b, lambda_reg):
-    assert P.shape[1] == X.shape[1] == Y.shape[1]
-    n = X.shape[1]
-    G = -(Y - P)
-    del_w = (1/n * (G @ X.T)) + (2 * lambda_reg * W)
-    del_b = 1/n * (G @ np.eye(n))
-    return del_w, del_b
 
 
 
@@ -61,10 +34,11 @@ W = initialize_W((K, d))
 b = initialize_b((K, 1))
 
 X = normalize(X)
-pred = forward_pass(X[:, :5], W, b)
+pred = forward_pass(X[:, :1], W, b)
 ComputeCost(X[:, :5], Y[:, :5], W, b, 0.1)
 ComputeAccuracy(X, y, W, b)
-ComputeGradients(X[:, :5], Y[:, :5], pred, W, b, 0.1)
+analytical_w, analytical_b = ComputeGradients(X[:, :1], Y[:, :1], pred, W, 0)
+numerical_w, numerical_b = ComputeGradsNum(X[:, :1], Y[:, :1], pred, W, b, 0, 1e-6)
 
 val_batch = LoadBatch('data_batch_2')
 test_batch = LoadBatch('test_batch')
