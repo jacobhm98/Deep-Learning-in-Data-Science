@@ -4,23 +4,26 @@ from sklearn.utils import shuffle
 
 # Implemented functions
 
-def MiniBatchGD(X, Y, GDparams, W, b, lambda_reg):
+def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
     n_batch, eta, n_epochs = GDparams
-    n_batches = list(range(int(X.shape[1] / n_batch)))
+    n_batches = list(range(int(train_X.shape[1] / n_batch)))
     batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in n_batches]
+    train_cost_per_epoch = np.zeros(n_epochs)
+    val_cost_per_epoch = np.zeros(n_epochs)
     for epoch in range(n_epochs):
-        X, Y = shuffle(X.T, Y.T)
-        X = X.T
-        Y = Y.T
+        train_X, train_Y = shuffle(train_X.T, train_Y.T)
+        train_X = train_X.T
+        train_Y = train_Y.T
         for batch in batches:
-            batch_X = X[:, batch[0]:batch[1]]
-            batch_Y = Y[:, batch[0]:batch[1]]
+            batch_X = train_X[:, batch[0]:batch[1]]
+            batch_Y = train_Y[:, batch[0]:batch[1]]
             P = forward_pass(batch_X, W, b)
             del_w, del_b = ComputeGradients(batch_X, batch_Y, P, W, lambda_reg)
             W = W - eta * del_w
             b = b - eta * del_b
-        print(ComputeCost(X, Y, W, b, lambda_reg))
-    return W, b
+        train_cost_per_epoch[epoch] = ComputeCost(train_X, train_Y, W, b, lambda_reg)
+        val_cost_per_epoch[epoch] = ComputeCost(val_X, val_Y, W, b, lambda_reg)
+    return W, b, train_cost_per_epoch, val_cost_per_epoch
 
 
 def forward_pass(X, W, b):
@@ -51,6 +54,14 @@ def ComputeCost(X, Y, W, b, lambda_reg):
     ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
     total_cost = ce_term + reg_term
     return total_cost
+
+
+def normalize(X):
+    mean = np.mean(X, axis=1).reshape((-1, 1))
+    std = np.std(X, axis=1).reshape((-1, 1))
+    X = X - mean
+    X = X / std
+    return X
 
 
 # Given functions
