@@ -34,9 +34,12 @@ n_batch = 100
 eta = 0.001
 n_epochs = 40
 GDparams = [n_batch, eta, n_epochs]
-W, b = MiniBatchGD(X, Y, GDparams, W, b, lambda_reg=0.01)
 test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+test_X = normalize(test_X)
+for i in range(1, 6):
+    train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_' + str(i)))
+    train_X = normalize(train_X)
+    W, b = MiniBatchGD(train_X, train_Y, GDparams, W, b, lambda_reg=0)
 print(ComputeAccuracy(test_X, test_y, W, b))
 
 
-val_batch = LoadBatch('data_batch_2')
