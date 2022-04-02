@@ -1,4 +1,5 @@
 from functions import *
+import matplotlib.pyplot as plt
 
 
 def unpack_batch(batch):
@@ -25,6 +26,15 @@ def combine_train_sets():
         train_y = np.concatenate((train_y, more_y))
     return train_X, train_Y, train_y
 
+def write_results_to_file(filename, train_cost, val_cost):
+    with open(filename, 'w') as f:
+        f.write("train cost\n")
+        for cost in train_cost:
+            f.write(str(cost)+'\n')
+        f.write("val cost\n")
+        for cost in val_cost:
+            f.write(str(cost)+'\n')
+
 
 train_X, train_Y, train_y = combine_train_sets()
 train_X = normalize(train_X)
@@ -39,6 +49,10 @@ eta = 0.001
 n_epochs = 40
 GDparams = [n_batch, eta, n_epochs]
 W, b, train_cost, val_cost = MiniBatchGD(train_X, train_Y, test_X, test_Y, GDparams, W, b, 0)
+plt.plot(list(range(len(train_cost))), train_cost, label='train cost per epoch')
+plt.plot(list(range(len(val_cost))), val_cost, label='validation cost per epoch')
+plt.legend(loc='best')
+plt.show()
 montage(W)
 print("train cost")
 print(train_cost)
