@@ -2,6 +2,8 @@
 *.blg
 *.aux
 *.bbl
+*.log
+*.synctex.gz
 .idea/
 __pycache__/
 venv/
