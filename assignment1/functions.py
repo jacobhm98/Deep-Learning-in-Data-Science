@@ -26,7 +26,7 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
     return W, b, train_cost_per_epoch, val_cost_per_epoch
 
 
-def verify_gradient_descent(X, Y, P, W, b, lambda_reg, permitted_difference=1e-5):
+def verify_gradient_descent(X, Y, P, W, b, lambda_reg, permitted_difference=1e-7):
     grad_w, grad_b = ComputeGradients(X, Y, P, W, lambda_reg)
     num_w, num_b = ComputeGradsNum(X, Y, P, W, b, lambda_reg, 1e-6)
     delta_w = np.abs(grad_w - num_w)
