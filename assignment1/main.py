@@ -37,6 +37,7 @@ def write_results_to_file(filename, train_cost, val_cost):
 
 
 train_X, train_Y, train_y = combine_train_sets()
+#train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_1'))
 train_X = normalize(train_X)
 test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
 test_X = normalize(test_X)
@@ -54,7 +55,7 @@ n_batch = 100
 eta = 0.001
 n_epochs = 40
 GDparams = [n_batch, eta, n_epochs]
-W, b, train_cost, val_cost = MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, 0.1)
+W, b, train_cost, val_cost = MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, 1)
 plt.plot(list(range(len(train_cost))), train_cost, label='train cost per epoch')
 plt.plot(list(range(len(val_cost))), val_cost, label='validation cost per epoch')
 plt.legend(loc='best')

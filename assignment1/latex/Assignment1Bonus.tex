@@ -1,0 +1,42 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\author{Jacob Heden Malm}
+\title{DD2424 Assignment 1 Bonus}
+\begin{document}
+\maketitle
+\section{Exercise 2.1}
+
+\subsection{a}
+I was using all 5 batches of training data for all of the above runs, with the validation set consisting of the first 1000 entries in the test set, and the rest being the test set.
+
+However, in order to assess the improvement this change made, I will compare the final test accuracy for a network trained on all batches with the test accuracy of a network trained on only one batch.
+
+\subsection{$lambda=0$, $eta=0.1$}
+Final test accuracy all batches: 0.3027\\
+Final test accuracy batch 1: 0.3064
+
+\subsection{$lambda=0$, $eta=0.001$}
+Final test accuracy: 0.4097\\
+Final test accuracy batch 1: 0.392
+
+
+\subsection{$lambda=0.1$, $eta=0.001$}
+Final test accuracy: 0.4095\\
+Final test accuracy batch 1: 0.396
+
+
+\subsection{$lambda=1$, $eta=0.001$}
+Final test accuracy: 0.3801\\
+Final test accuracy batch 1: 0.3734
+
+From these results we can conclude that our network consistently performs slightly better with the expanded data set, given that the learning rate we use to train the network is correct. I did however expect the difference to be much larger than what I observed.
+
+\subsection{b}
+
+
+\end{document}
