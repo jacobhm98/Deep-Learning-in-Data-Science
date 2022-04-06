@@ -87,7 +87,7 @@ def flip_image(X, idx):
     image = image.reshape((32, 32, 3), order='F')
     image = np.fliplr(image.transpose(1, 0, 2))
     image = image.transpose(1, 0, 2)
-    image = image.reshape(shape)
+    image = image.reshape(shape, order='F')
     plt.imshow(image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
     plt.show()
     return image
