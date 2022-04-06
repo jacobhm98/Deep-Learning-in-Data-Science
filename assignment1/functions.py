@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.utils import shuffle
+from random import sample
+from copy import copy
 
 
 # Implemented functions
@@ -14,6 +17,7 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
         train_X, train_Y = shuffle(train_X.T, train_Y.T)
         train_X = train_X.T
         train_Y = train_Y.T
+        flip_half_images(train_X)
         for batch in batches:
             batch_X = train_X[:, batch[0]:batch[1]]
             batch_Y = train_Y[:, batch[0]:batch[1]]
@@ -71,6 +75,30 @@ def normalize(X):
     X = X - mean
     X = X / std
     return X
+
+
+# Bonus Functions
+def flip_image(X, idx):
+    image = X[:, idx]
+    orig_image = copy(image)
+    shape = image.shape
+    plt.imshow(orig_image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
+    plt.show()
+    image = image.reshape((32, 32, 3), order='F')
+    image = np.fliplr(image.transpose(1, 0, 2))
+    image = image.transpose(1, 0, 2)
+    image = image.reshape(shape)
+    plt.imshow(image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
+    plt.show()
+    return image
+
+
+def flip_half_images(X):
+    N = X.shape[1]
+    to_flip = round(N / 2)
+    to_flip = sample(list(range(N)), to_flip)
+    for idx in to_flip:
+        X[:, idx] = flip_image(X, idx)
 
 
 # Given functions

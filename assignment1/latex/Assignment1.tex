@@ -15,7 +15,7 @@
 
 I was able to write all of the required functions without issue. In order to verify that my gradient computations were correct, I first debugged the program during its execution and visually compared the gradient values computed by my gradient descent method as well as the numerical approximation method we were given. I then wrote a method called "verify\_gradient\_descent()" that a mini batch of training examples, the weight and bias matrix, a regularization parameter, and a permitted difference. This method then computes the gradient update using the analytic method and the numerical method, and takes the absolute value of the difference matrix computed by the two methods. It then asserts that the means of these two matrices (W and b) are less than the permitted difference parameter. Using a mini batch of 5 data points, and a regularization multiplier of 0.01 I got the mean of the absolute difference to be in the neighborhood of 4.5e-8. I took this to signify success.\\
 
-I also chose to randomize the order of training examples between each epoch. I also used all of the available data for training my network, and split the test set into a validation set consisting of 1000 examples, and the rest being the final test set.
+I chose to randomize the order of training examples between each epoch. I also used all of the available data for training my network, and split the test set into a validation set consisting of 1000 examples, and the rest being the final test set.
 
 \section{Data and figures}
 Here, graphs detailing the training development and images representing the learnt weight matrix will be shown for the different required parameter settings.
