@@ -78,19 +78,22 @@ def normalize(X):
 
 
 # Bonus Functions
-def flip_image(X, idx):
+def flip_image(X, idx, show_images=False):
     image = X[:, idx]
     orig_image = copy(image)
     shape = image.shape
-    plt.imshow(orig_image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
-    plt.show()
     image = image.reshape((32, 32, 3), order='F')
     image = np.fliplr(image.transpose(1, 0, 2))
     image = image.transpose(1, 0, 2)
     image = image.reshape(shape, order='F')
-    plt.imshow(image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
-    plt.show()
+    if show_images:
+        plt.imshow(orig_image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
+        plt.show()
+        plt.imshow(image.reshape((32, 32, 3), order='F').transpose(1, 0, 2))
+        plt.show()
     return image
+
+
 
 
 def flip_half_images(X):
