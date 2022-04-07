@@ -120,4 +120,16 @@ This combination resulted in a final test accuracy of 0.4114, which is a little 
 
 In order to find the absolute best combinations, I chose to run another grid search, this time in the neighbourhood of the best combination. Thus I set n\_batches = [150, 200, 250], etas = [0.005, 0.01, 0.015], lambda = [0, 0.0001, 0.005].\\
 
+The most performant hyperparameter setting we got here was n\_batch = 250, eta = 0.005, and lambda = 0.001.\\
+
+The final test accuracy achieved with these settings was 0.4206. This is the highest observed yet, albeit not by a huge margin. Here, we can also observe the training and validation loss:
+
+\includegraphics[width=\textwidth]{grid_searched_settings.png}
+
+As shown in the graph, this model does indeed reach the lowest validation loss out of any of the models tested.\\
+
+\subsection{Most performant model}
+
+When comparing the result of all of these improvements with the original model, trained on one batch with haphazardly chosen parameter settings, and no data augmentation, we can conclusively conclude that the accuracy of the model improves. We reach 0.4206 test classification accuracy, vs. the previous highest scoring accuracy of 0.396. Each change, increasing training data, adding data augmentation in the form of image flipping, and grid searching for good parameter values, increases test accuracy by about a percentage point. The highest performing network combines all of them. We can however also state that the improvement is rather modest, when balancing the effort put in.
+
 \end{document}
