@@ -8,8 +8,6 @@ def LoadBatch(filename):
         dict = pickle.load(fo, encoding='bytes')
     return dict
 
-def ComputeGradsNum(X, Y, W, b, lambda_reg, h):
-    None
 
 def unpack_batch(batch):
     X = batch[b'data']
@@ -32,7 +30,7 @@ def initialize_network_params(m, d, k):
     W_2 = np.random.normal(0, 1 / sqrt(m), (k, m))
     b_1 = np.zeros((m, 1))
     b_2 = np.zeros((k, 1))
-    return (W_1, W_2), (b_1, b_2)
+    return [W_1, W_2], [b_1, b_2]
 
 
 def combine_train_sets():
@@ -57,24 +55,35 @@ def ComputeGradients(X, Y, W, b, lambda_reg):
     n = X.shape[1]
     h, p = forward_pass(X, W, b)
     G = - (Y - p)
-    del_W_2 = (1/n * G @ h.T) + (2 * lambda_reg * W[1])
-    del_b_2 = 1/n * (G @ np.ones((n, 1)))
+    del_W_2 = (1 / n * G @ h.T) + (2 * lambda_reg * W[1])
+    del_b_2 = 1 / n * (G @ np.ones((n, 1)))
 
     G = W[1].T @ G
     G = G * (h > 0).astype(int)
 
-    del_W_1 = (1/n * (G @ X.T)) + (2 * lambda_reg * W[0])
-    del_b_1 = 1/n * (G @ np.ones((n, 1)))
+    del_W_1 = (1 / n * (G @ X.T)) + (2 * lambda_reg * W[0])
+    del_b_1 = 1 / n * (G @ np.ones((n, 1)))
 
-    return (del_W_1, del_W_2), (del_b_1, del_b_2)
+    return [del_W_1, del_W_2], [del_b_1, del_b_2]
 
 
+def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
+    for epoch in range(1000):
+        del_W, del_b = ComputeGradients(X, Y, W, b, lambda_reg)
+        W[0] = W[0] - eta * del_W[0]
+        W[1] = W[1] - eta * del_W[1]
+        b[0] = b[0] - eta * del_b[0]
+        b[1] = b[1] - eta * del_b[1]
+        print(ComputeCost(X, Y, W, b, lambda_reg))
 
 
 def ComputeCost(X, Y, W, b, lambda_reg):
     assert X.shape[1] == Y.shape[1]
-    reg_term = lambda_reg * np.sum(W ** 2)
-    predictions = forward_pass(X, W, b)
+    weight_sum = 0
+    for w in W:
+        weight_sum += np.sum(w ** 2)
+    reg_term = lambda_reg * weight_sum
+    predictions = forward_pass(X, W, b)[1]
     ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
     total_cost = ce_term + reg_term
     return total_cost
