@@ -8,6 +8,8 @@ def LoadBatch(filename):
         dict = pickle.load(fo, encoding='bytes')
     return dict
 
+def ComputeGradsNum(X, Y, W, b, lambda_reg, h):
+    None
 
 def unpack_batch(batch):
     X = batch[b'data']
@@ -26,11 +28,11 @@ def normalize(X):
 
 
 def initialize_network_params(m, d, k):
-    W_1 = np.random.normal(0, 1/sqrt(d), (m, d))
-    W_2 = np.random.normal(0, 1/sqrt(m), (k, m))
+    W_1 = np.random.normal(0, 1 / sqrt(d), (m, d))
+    W_2 = np.random.normal(0, 1 / sqrt(m), (k, m))
     b_1 = np.zeros((m, 1))
     b_2 = np.zeros((k, 1))
-    return W_1, W_2, b_1, b_2
+    return (W_1, W_2), (b_1, b_2)
 
 
 def combine_train_sets():
@@ -43,20 +45,39 @@ def combine_train_sets():
     return train_X, train_Y, train_y
 
 
-def forward_pass(X, W_1, b_1, W_2, b_2):
-    s_1 = W_1 @ X + b_1
-    h_1 = np.maximum(0, s_1)
-    s_2 = W_2 @ h_1 + b_2
+def forward_pass(X, W, b):
+    s_1 = W[0] @ X + b[0]
+    h = np.maximum(0, s_1)
+    s_2 = W[1] @ h + b[1]
     p = softmax(s_2)
-    return h_1, p
+    return h, p
 
 
-def backward_pass():
-    pass
+def ComputeGradients(X, Y, W, b, lambda_reg):
+    n = X.shape[1]
+    h, p = forward_pass(X, W, b)
+    G = - (Y - p)
+    del_W_2 = (1/n * G @ h.T) + (2 * lambda_reg * W[1])
+    del_b_2 = 1/n * (G @ np.ones((n, 1)))
+
+    G = W[1].T @ G
+    G = G * (h > 0).astype(int)
+
+    del_W_1 = (1/n * (G @ X.T)) + (2 * lambda_reg * W[0])
+    del_b_1 = 1/n * (G @ np.ones((n, 1)))
+
+    return (del_W_1, del_W_2), (del_b_1, del_b_2)
 
 
-def ComputeCost():
-    pass
+
+
+def ComputeCost(X, Y, W, b, lambda_reg):
+    assert X.shape[1] == Y.shape[1]
+    reg_term = lambda_reg * np.sum(W ** 2)
+    predictions = forward_pass(X, W, b)
+    ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
+    total_cost = ce_term + reg_term
+    return total_cost
 
 
 def softmax(x):

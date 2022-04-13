@@ -94,8 +94,6 @@ def flip_image(X, idx, show_images=False):
     return image
 
 
-
-
 def flip_half_images(X):
     N = X.shape[1]
     to_flip = round(N / 2)
