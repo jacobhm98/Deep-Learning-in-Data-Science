@@ -17,6 +17,8 @@ def initialize_b(shape):
     return np.random.normal(0, .01, shape)
 
 
+
+
 def combine_train_sets():
     train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_1'))
     for i in range(2, 6):

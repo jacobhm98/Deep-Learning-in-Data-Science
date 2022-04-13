@@ -1,4 +1,5 @@
 import numpy as np
+from math import sqrt
 
 
 def LoadBatch(filename):
@@ -12,15 +13,24 @@ def unpack_batch(batch):
     X = batch[b'data']
     y = batch[b'labels']
     Y = np.eye(10)[y]
-    return X.T, Y.T, np.array(y)
+    X = normalize(X.T)
+    return X, Y.T, np.array(y)
 
 
-def initialize_W(shape):
-    return np.random.normal(0, .01, shape)
+def normalize(X):
+    mean = np.mean(X, axis=1).reshape((-1, 1))
+    std = np.std(X, axis=1).reshape((-1, 1))
+    X = X - mean
+    X = X / std
+    return X
 
 
-def initialize_b(shape):
-    return np.random.normal(0, .01, shape)
+def initialize_network_params(m, d, k):
+    W_1 = np.random.normal(0, 1/sqrt(d), (m, d))
+    W_2 = np.random.normal(0, 1/sqrt(m), (k, m))
+    b_1 = np.zeros((m, 1))
+    b_2 = np.zeros((k, 1))
+    return W_1, W_2, b_1, b_2
 
 
 def combine_train_sets():
@@ -39,6 +49,14 @@ def forward_pass(X, W_1, b_1, W_2, b_2):
     s_2 = W_2 @ h_1 + b_2
     p = softmax(s_2)
     return h_1, p
+
+
+def backward_pass():
+    pass
+
+
+def ComputeCost():
+    pass
 
 
 def softmax(x):
