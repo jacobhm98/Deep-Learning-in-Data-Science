@@ -78,7 +78,7 @@ def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
         print(ComputeCost(X, Y, W, b, lambda_reg))
 
 
-def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
+def MiniBatchGD(train_X, train_Y, train_y, val_X, val_Y, val_y, GDparams, W, b, lambda_reg):
     # unpack arguments
     n_batch, etas, n_cycles = GDparams
     eta_min, eta_max, step_size = etas
@@ -92,16 +92,18 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
     # administrative vars
     train_cost = []
     val_cost = []
+    train_accuracy = []
+    val_accuracy = []
     iterations = 0
     while True:
-        train_X, train_Y = shuffle(train_X.T, train_Y.T)
+        train_X, train_Y, train_y = shuffle(train_X.T, train_Y.T, train_y)
         train_X = train_X.T
         train_Y = train_Y.T
         for batch in batches:
             # cyclical training rate
             cycle = floor(1 + iterations / (2 * step_size))
             if cycle > n_cycles:
-                return W, b, train_cost, val_cost
+                return W, b, train_cost, val_cost, train_accuracy, val_accuracy
             x = abs(iterations / step_size - 2 * cycle + 1)
             eta = eta_min + (eta_max - eta_min) * max(0, 1 - x)
 
@@ -109,6 +111,8 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
             if iterations % log_interval == 0:
                 train_cost.append(ComputeCost(train_X, train_Y, W, b, lambda_reg))
                 val_cost.append(ComputeCost(val_X, val_Y, W, b, lambda_reg))
+                train_accuracy.append(ComputeAccuracy(train_X, train_y, W, b))
+                val_accuracy.append(ComputeAccuracy(val_X, val_y, W, b))
 
             iterations += 1
 
