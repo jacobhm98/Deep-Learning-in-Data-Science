@@ -9,6 +9,7 @@ def main():
     etas = [1e-5, 1e-1, 800]
     GDParams = [100, etas, 3]
     W, b, train_cost, val_cost = MiniBatchGD(train_X, train_Y, val_X, val_Y, GDParams, W, b, 0.01)
+    print(len(train_cost))
     print(train_cost)
     print(val_cost)
     print(ComputeAccuracy(train_X, train_y, W, b))

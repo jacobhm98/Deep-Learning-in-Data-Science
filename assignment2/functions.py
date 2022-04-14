@@ -87,8 +87,7 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
     batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in list(range(n_batches_per_epoch))]
 
     # figure out when we should log performance
-    batches_per_cycle = floor(n_batches_per_epoch + 1 / (2 * step_size))
-    log_interval = int(batches_per_cycle / 10)
+    log_interval = int(2 * step_size / 10)
 
     # administrative vars
     train_cost = []
