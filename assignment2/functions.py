@@ -101,7 +101,7 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
         for batch in batches:
             # cyclical training rate
             cycle = floor(1 + iterations / (2 * step_size))
-            if cycle == n_cycles:
+            if cycle > n_cycles:
                 return W, b, train_cost, val_cost
             x = abs(iterations / step_size - 2 * cycle + 1)
             eta = eta_min + (eta_max - eta_min) * max(0, 1 - x)
@@ -121,6 +121,13 @@ def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
             W[1] = W[1] - eta * del_w[1]
             b[0] = b[0] - eta * del_b[0]
             b[1] = b[1] - eta * del_b[1]
+
+
+def ComputeAccuracy(X, y, W, b):
+    assert len(y) == X.shape[1]
+    predictions = np.argmax(forward_pass(X, W, b)[1], axis=0)
+    correct = (predictions == y).sum()
+    return correct / len(y)
 
 
 def ComputeCost(X, Y, W, b, lambda_reg):
