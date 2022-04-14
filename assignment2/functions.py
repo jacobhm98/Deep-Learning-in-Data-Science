@@ -1,5 +1,6 @@
 import numpy as np
-from math import sqrt
+from math import sqrt, floor
+from sklearn.utils import shuffle
 
 
 def LoadBatch(filename):
@@ -75,6 +76,37 @@ def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
         b[0] = b[0] - eta * del_b[0]
         b[1] = b[1] - eta * del_b[1]
         print(ComputeCost(X, Y, W, b, lambda_reg))
+
+
+def MiniBatchGD(train_X, train_Y, val_X, val_Y, GDparams, W, b, lambda_reg):
+    n_batch, etas, n_epochs = GDparams
+    eta_min, eta_max, step_size = etas
+    n_batches = list(range(int(train_X.shape[1] / n_batch)))
+    batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in n_batches]
+    train_cost_per_epoch = np.zeros(n_epochs)
+    val_cost_per_epoch = np.zeros(n_epochs)
+    iterations = 0
+    for epoch in range(n_epochs):
+        train_X, train_Y = shuffle(train_X.T, train_Y.T)
+        train_X = train_X.T
+        train_Y = train_Y.T
+        for batch in batches:
+            # cyclical training rate
+            cycle = floor(1 + iterations / (2 * step_size))
+            x = abs(iterations / step_size - 2 * cycle + 1)
+            eta = eta_min + (eta_max - eta_min) * max(0, 1 - x)
+            iterations += 1
+
+            batch_X = train_X[:, batch[0]:batch[1]]
+            batch_Y = train_Y[:, batch[0]:batch[1]]
+            del_w, del_b = ComputeGradients(batch_X, batch_Y, W, lambda_reg)
+            W[0] = W[0] - eta * del_w[0]
+            W[1] = W[1] - eta * del_w[1]
+            b[0] = b[0] - eta * del_b[0]
+            b[1] = b[1] - eta * del_b[1]
+        train_cost_per_epoch[epoch] = ComputeCost(train_X, train_Y, W, b, lambda_reg)
+        val_cost_per_epoch[epoch] = ComputeCost(val_X, val_Y, W, b, lambda_reg)
+    return W, b, train_cost_per_epoch, val_cost_per_epoch
 
 
 def ComputeCost(X, Y, W, b, lambda_reg):
