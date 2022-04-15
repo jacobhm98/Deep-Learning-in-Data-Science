@@ -18,6 +18,16 @@ def unpack_batch(batch):
     return X, Y.T, np.array(y)
 
 
+def combine_train_sets():
+    train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_1'))
+    for i in range(2, 6):
+        more_X, more_Y, more_y = unpack_batch(LoadBatch('data_batch_' + str(i)))
+        train_X = np.concatenate((train_X, more_X), axis=1)
+        train_Y = np.concatenate((train_Y, more_Y), axis=1)
+        train_y = np.concatenate((train_y, more_y))
+    return train_X, train_Y, train_y
+
+
 def normalize(X):
     mean = np.mean(X, axis=1).reshape((-1, 1))
     std = np.std(X, axis=1).reshape((-1, 1))
