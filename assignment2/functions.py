@@ -30,7 +30,7 @@ def combine_train_sets():
 
 def search_range_of_lambda(l_min, l_max, num_values, train_set, val_set):
     results = {}
-    lambdas = np.random.uniform(-1, 1, num_values)
+    lambdas = np.random.uniform(0, 1, num_values)
     for i in range(len(lambdas)):
         lambdas[i] = l_min + (l_max - l_min) * lambdas[i]
         lambdas[i] = 10 ** lambdas[i]
