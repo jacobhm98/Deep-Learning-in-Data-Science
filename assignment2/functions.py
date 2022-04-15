@@ -96,13 +96,15 @@ def ComputeGradients(X, Y, W, b, lambda_reg):
 
 
 def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
+    loss = np.zeros(1000)
     for epoch in range(1000):
         del_W, del_b = ComputeGradients(X, Y, W, b, lambda_reg)
         W[0] = W[0] - eta * del_W[0]
         W[1] = W[1] - eta * del_W[1]
         b[0] = b[0] - eta * del_b[0]
         b[1] = b[1] - eta * del_b[1]
-        print(ComputeCost(X, Y, W, b, lambda_reg))
+        loss[epoch] = ComputeCost(X, Y, W, b, lambda_reg)
+    return loss
 
 
 def MiniBatchGD(train_set, val_set, GDparams, W, b, lambda_reg):
