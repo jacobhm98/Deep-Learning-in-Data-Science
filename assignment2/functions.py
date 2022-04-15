@@ -28,6 +28,23 @@ def combine_train_sets():
     return train_X, train_Y, train_y
 
 
+def search_range_of_lambda(l_min, l_max, num_values, train_set, val_set):
+    results = {}
+    lambdas = np.random.uniform(-1, 1, num_values)
+    for i in range(len(lambdas)):
+        lambdas[i] = l_min + (l_max - l_min) * lambdas[i]
+        lambdas[i] = 10 ** lambdas[i]
+
+    train_X, train_Y, train_y = train_set
+    etas = [1e-5, 1e-1, 2 * floor(train_X.shape[1] / 100)]
+    GDParams = [100, etas, 2]
+    for i in range(len(lambdas)):
+        W, b = initialize_network_params(60, train_X.shape[0], train_Y.shape[0])
+        _, _, _, _, _, val_accuracy = MiniBatchGD(train_set, val_set, GDParams, W, b, lambdas[i])
+        results[lambdas[i]] = np.amax(val_accuracy)
+    return results
+
+
 def normalize(X):
     mean = np.mean(X, axis=1).reshape((-1, 1))
     std = np.std(X, axis=1).reshape((-1, 1))
@@ -88,10 +105,12 @@ def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
         print(ComputeCost(X, Y, W, b, lambda_reg))
 
 
-def MiniBatchGD(train_X, train_Y, train_y, val_X, val_Y, val_y, GDparams, W, b, lambda_reg):
+def MiniBatchGD(train_set, val_set, GDparams, W, b, lambda_reg):
     # unpack arguments
     n_batch, etas, n_cycles = GDparams
     eta_min, eta_max, step_size = etas
+    train_X, train_Y, train_y = train_set
+    val_X, val_Y, val_y = val_set
 
     n_batches_per_epoch = int(train_X.shape[1] / n_batch)
     batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in list(range(n_batches_per_epoch))]
