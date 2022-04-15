@@ -43,8 +43,27 @@ def coarse_search():
     plt.show()
 
 
+def fine_search():
+    train_X, train_Y, train_y = combine_train_sets()
+    test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+    val_X = test_X[:, :1000]
+    val_Y = test_Y[:, :1000]
+    val_y = test_y[:1000]
+    test_X = test_X[:, 1000:]
+    test_Y = test_Y[:, 1000:]
+    test_y = test_y[1000:]
+    performance_of_lambdas = search_range_of_lambda(-6, -3, 10, [train_X, train_Y, train_y], [val_X, val_Y, val_y])
+    print(performance_of_lambdas)
+    items = performance_of_lambdas.items()
+    items = sorted(items)
+    x, y = zip(*items)
+    plt.plot(x, y)
+    plt.show()
+
+
+
 def main():
-    coarse_search()
+    fine_search()
 
 
 main()
