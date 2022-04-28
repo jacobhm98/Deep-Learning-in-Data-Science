@@ -61,38 +61,52 @@ def initialize_network_params(m, d, k):
     return [W_1, W_2], [b_1, b_2]
 
 
-def combine_train_sets():
-    train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_1'))
-    for i in range(2, 6):
-        more_X, more_Y, more_y = unpack_batch(LoadBatch('data_batch_' + str(i)))
-        train_X = np.concatenate((train_X, more_X), axis=1)
-        train_Y = np.concatenate((train_Y, more_Y), axis=1)
-        train_y = np.concatenate((train_y, more_y))
-    return train_X, train_Y, train_y
-
-
 def forward_pass(X, W, b):
-    s_1 = W[0] @ X + b[0]
-    h = np.maximum(0, s_1)
-    s_2 = W[1] @ h + b[1]
-    p = softmax(s_2)
-    return h, p
+    layer_outputs = []
+    for l in range(len(W - 1)):
+        s = W[l] @ X + b[l]
+        layer_outputs.append(np.maximum(0, s))
+    s = W[-1] @ layer_outputs[-1] + b[-1]
+    layer_outputs.append(softmax(s))
+    return layer_outputs
+
+
+def forward_pass_batch_norm(X, W, b):
+    s = []
+    s_hat = []
+    x = []
+    mu = []
+    var = []
+    for l in range(len(W - 1)):
+        s.append(W[l] @ X + b[l])
+        mu.append(np.mean(s[l], axis=1))
+        var.append(np.var(s[l], axis=1))
+        s_hat.append(BatchNormalize(s[l], mu[l], var[l]))
+
+
+def BatchNormalize(s, mu, var):
+    return np.power(np.diag(var + np.finfo(float).eps), -0.5) @ (s - mu)
 
 
 def ComputeGradients(X, Y, W, b, lambda_reg):
     n = X.shape[1]
-    h, p = forward_pass(X, W, b)
-    G = - (Y - p)
-    del_W_2 = (1 / n * G @ h.T) + (2 * lambda_reg * W[1])
-    del_b_2 = 1 / n * (G @ np.ones((n, 1)))
+    del_W = []
+    del_b = []
+    layer_outputs = forward_pass(X, W, b)
+    G = - (Y - layer_outputs[-1])
+    for l in range(len(W) - 1, 0, -1):
+        del_W.append((1 / n * G @ layer_outputs[l - 1].T) + (2 * lambda_reg * W[l]))
+        del_b.append(1 / n * (G @ np.ones((n, 1))))
 
-    G = W[1].T @ G
-    G = G * (h > 0).astype(int)
+        G = W[l].T @ G
+        G = G * (layer_outputs[l - 1] > 0).astype(int)
+
+    # fix last layer
 
     del_W_1 = (1 / n * (G @ X.T)) + (2 * lambda_reg * W[0])
     del_b_1 = 1 / n * (G @ np.ones((n, 1)))
 
-    return [del_W_1, del_W_2], [del_b_1, del_b_2]
+    return del_W, del_b
 
 
 def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
