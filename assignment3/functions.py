@@ -67,13 +67,13 @@ def initialize_network_params(d, hidden_layer_sizes, k):
 
 
 def forward_pass(X, W, b):
-    layer_outputs = []
+    layer_outputs = [X]
     for l in range(len(W) - 1):
-        s = W[l] @ X + b[l]
+        s = W[l] @ layer_outputs[l] + b[l]
         layer_outputs.append(np.maximum(0, s))
     s = W[-1] @ layer_outputs[-1] + b[-1]
     layer_outputs.append(softmax(s))
-    return layer_outputs
+    return layer_outputs[1::]
 
 
 def forward_pass_batch_norm(X, W, b):
@@ -185,7 +185,7 @@ def ComputeCost(X, Y, W, b, lambda_reg):
     for w in W:
         weight_sum += np.sum(w ** 2)
     reg_term = lambda_reg * weight_sum
-    predictions = forward_pass(X, W, b)[1]
+    predictions = forward_pass(X, W, b)[-1]
     ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
     total_cost = ce_term + reg_term
     return total_cost
