@@ -53,17 +53,22 @@ def normalize(X):
     return X
 
 
-def initialize_network_params(m, d, k):
-    W_1 = np.random.normal(0, 1 / sqrt(d), (m, d))
-    W_2 = np.random.normal(0, 1 / sqrt(m), (k, m))
-    b_1 = np.zeros((m, 1))
-    b_2 = np.zeros((k, 1))
-    return [W_1, W_2], [b_1, b_2]
+def initialize_network_params(d, hidden_layer_sizes, k):
+    W = [np.random.normal(0, 1 / sqrt(d), (hidden_layer_sizes[0], d))]
+    b = [np.zeros((hidden_layer_sizes[0], 1))]
+
+    for i in range(1, len(hidden_layer_sizes)):
+        W.append(np.random.normal(0, 1/sqrt(hidden_layer_sizes[i - 1]), (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+        b.append(np.zeros((hidden_layer_sizes[i], 1)))
+
+    W.append(np.random.normal(0, 1/sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+    b.append(np.zeros((k, 1)))
+    return W, b
 
 
 def forward_pass(X, W, b):
     layer_outputs = []
-    for l in range(len(W - 1)):
+    for l in range(len(W) - 1):
         s = W[l] @ X + b[l]
         layer_outputs.append(np.maximum(0, s))
     s = W[-1] @ layer_outputs[-1] + b[-1]
@@ -101,22 +106,18 @@ def ComputeGradients(X, Y, W, b, lambda_reg):
         G = W[l].T @ G
         G = G * (layer_outputs[l - 1] > 0).astype(int)
 
-    # fix last layer
-
-    del_W_1 = (1 / n * (G @ X.T)) + (2 * lambda_reg * W[0])
-    del_b_1 = 1 / n * (G @ np.ones((n, 1)))
-
-    return del_W, del_b
+    del_W.append(1 / n * G @ X.T + (2 * lambda_reg * W[0]))
+    del_b.append(1 / n * (G @ np.ones((n, 1))))
+    return del_W[::-1], del_b[::-1]
 
 
 def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
     loss = np.zeros(1000)
     for epoch in range(1000):
         del_W, del_b = ComputeGradients(X, Y, W, b, lambda_reg)
-        W[0] = W[0] - eta * del_W[0]
-        W[1] = W[1] - eta * del_W[1]
-        b[0] = b[0] - eta * del_b[0]
-        b[1] = b[1] - eta * del_b[1]
+        for i in range(len(W)):
+            W[i] = W[i] - eta * del_W[i]
+            b[i] = b[i] - eta * del_b[i]
         loss[epoch] = ComputeCost(X, Y, W, b, lambda_reg)
     return loss
 
