@@ -54,14 +54,14 @@ def normalize(X):
 
 
 def initialize_network_params(d, hidden_layer_sizes, k):
-    W = [np.random.normal(0, 1 / sqrt(d), (hidden_layer_sizes[0], d))]
+    W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
     b = [np.zeros((hidden_layer_sizes[0], 1))]
 
     for i in range(1, len(hidden_layer_sizes)):
-        W.append(np.random.normal(0, 1/sqrt(hidden_layer_sizes[i - 1]), (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+        W.append(np.random.normal(0, 2/sqrt(hidden_layer_sizes[i - 1]), (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
         b.append(np.zeros((hidden_layer_sizes[i], 1)))
 
-    W.append(np.random.normal(0, 1/sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+    W.append(np.random.normal(0, 2/sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
     b.append(np.zeros((k, 1)))
     return W, b
 
@@ -76,21 +76,35 @@ def forward_pass(X, W, b):
     return layer_outputs[1::]
 
 
-def forward_pass_batch_norm(X, W, b):
-    s = []
-    s_hat = []
-    x = []
+def forward_pass_batch_norm(X, W, b, gamma, beta):
+    S = []
+    S_hat = []
+    X = [X]
     mu = []
     var = []
-    for l in range(len(W - 1)):
-        s.append(W[l] @ X + b[l])
-        mu.append(np.mean(s[l], axis=1))
-        var.append(np.var(s[l], axis=1))
-        s_hat.append(BatchNormalize(s[l], mu[l], var[l]))
+    for l in range(len(W) - 1):
+        S.append(W[l] @ X[l] + b[l])
+        mu.append(np.mean(S[l], axis=1))
+        var.append(np.var(S[l], axis=1))
+        S_hat.append(BatchNormalize(S[l], mu[l], var[l]))
+        S_tilde = gamma[l] * S_hat[l] + beta[l]
+        X.append(np.maximum(0, S_tilde))
+    S.append(W[-1] @ X[-1] + b[-1])
+    X.append(softmax(S[-1]))
+    return X[1::], S, S_hat, mu, var
 
 
 def BatchNormalize(s, mu, var):
     return np.power(np.diag(var + np.finfo(float).eps), -0.5) @ (s - mu)
+
+
+def ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
+    n = X.shape[1]
+    Activations, S, S_hat, mu, var = forward_pass_batch_norm(X, W, b, gamma, beta)
+    del_W = []
+    del_b = []
+    del_gamma = []
+    del_beta = []
 
 
 def ComputeGradients(X, Y, W, b, lambda_reg):
@@ -166,15 +180,14 @@ def MiniBatchGD(train_set, val_set, GDparams, W, b, lambda_reg):
             batch_X = train_X[:, batch[0]:batch[1]]
             batch_Y = train_Y[:, batch[0]:batch[1]]
             del_w, del_b = ComputeGradients(batch_X, batch_Y, W, b, lambda_reg)
-            W[0] = W[0] - eta * del_w[0]
-            W[1] = W[1] - eta * del_w[1]
-            b[0] = b[0] - eta * del_b[0]
-            b[1] = b[1] - eta * del_b[1]
+            for i in range(len(W)):
+                W[i] = W[i] - eta * del_w[i]
+                b[i] = b[i] - eta * del_b[i]
 
 
 def ComputeAccuracy(X, y, W, b):
     assert len(y) == X.shape[1]
-    predictions = np.argmax(forward_pass(X, W, b)[1], axis=0)
+    predictions = np.argmax(forward_pass(X, W, b)[-1], axis=0)
     correct = (predictions == y).sum()
     return correct / len(y)
 
