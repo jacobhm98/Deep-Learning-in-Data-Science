@@ -58,10 +58,11 @@ def initialize_network_params(d, hidden_layer_sizes, k):
     b = [np.zeros((hidden_layer_sizes[0], 1))]
 
     for i in range(1, len(hidden_layer_sizes)):
-        W.append(np.random.normal(0, 2/sqrt(hidden_layer_sizes[i - 1]), (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
+                                  (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
         b.append(np.zeros((hidden_layer_sizes[i], 1)))
 
-    W.append(np.random.normal(0, 2/sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+    W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
     b.append(np.zeros((k, 1)))
     return W, b
 
@@ -98,13 +99,39 @@ def BatchNormalize(s, mu, var):
     return np.power(np.diag(var + np.finfo(float).eps), -0.5) @ (s - mu)
 
 
+def BatchNormBackPass(n, G, S, mu, var):
+    sigma_1 = np.power(var + np.finfo(float).eps, -0.5).T
+    sigma_2 = np.power(var + np.finfo(float).eps, -1.5).T
+    G_1 = G * (sigma_1 @ np.ones((n, 1)).T)
+    G_2 = G * (sigma_2 @ np.ones((n, 1)).T)
+    D = S - (mu @ np.ones((n, 1)).T)
+    c = (G_2 * D) @ np.ones((n, 1))
+    return G_1 - 1 / n * (G_1 @ np.ones((n, 1)) @ np.ones((n, 1)).T) - 1 / n * D * (c @ np.ones((n, 1)).T)
+
+
 def ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
     n = X.shape[1]
-    Activations, S, S_hat, mu, var = forward_pass_batch_norm(X, W, b, gamma, beta)
+    layer_outputs, S, S_hat, mu, var = forward_pass_batch_norm(X, W, b, gamma, beta)
     del_W = []
     del_b = []
     del_gamma = []
     del_beta = []
+    G = - (Y - layer_outputs[-1])
+    del_W.append((1 / n * G @ layer_outputs[1].T) + (2 * lambda_reg * W[-1]))
+    del_b.append(1 / n * (G @ np.ones((n, 1))))
+    G = W[-1].T @ G
+    G = G * (layer_outputs[-2] > 0).astype(int)
+    for l in range(len(W) - 1, 0, -1):
+        del_gamma.append((1 / n * G * S_hat) @ np.ones((n, 1)))
+        del_beta.append(1 / n * (G @ np.ones((n, 1))))
+        G = G * (gamma[l] @ np.ones((n, 1)).T)
+        G = BatchNormBackPass(n, G, S[l], mu[l], var[l])
+        del_W.append((1 / n * G @ layer_outputs[l - 1].T) + (2 * lambda_reg * W[l]))
+        del_b.append(1 / n * (G @ np.ones((n, 1))))
+        if l > 1:
+            G = W[l].T @ G
+            G = G * (layer_outputs[l - 1] > 0).astype(int)
+    return del_W, del_b, del_gamma, del_b, mu, var
 
 
 def ComputeGradients(X, Y, W, b, lambda_reg):
@@ -123,6 +150,17 @@ def ComputeGradients(X, Y, W, b, lambda_reg):
     del_W.append(1 / n * G @ X.T + (2 * lambda_reg * W[0]))
     del_b.append(1 / n * (G @ np.ones((n, 1))))
     return del_W[::-1], del_b[::-1]
+
+
+def sanity_check_batch_norm(X, Y, W, b, lambda_reg=0, eta=0.01):
+    loss = np.zeros(1000)
+    for epoch in range(1000):
+        del_W, del_b = ComputeGradients(X, Y, W, b, lambda_reg)
+        for i in range(len(W)):
+            W[i] = W[i] - eta * del_W[i]
+            b[i] = b[i] - eta * del_b[i]
+        loss[epoch] = ComputeCost(X, Y, W, b, lambda_reg)
+    return loss
 
 
 def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
