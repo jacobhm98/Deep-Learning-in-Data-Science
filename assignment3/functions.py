@@ -141,7 +141,7 @@ def ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
     del_gamma = []
     del_beta = []
     G = - (Y - layer_outputs[-1])
-    del_W.append((1 / n * G @ layer_outputs[1].T) + (2 * lambda_reg * W[-1]))
+    del_W.append((1 / n * G @ layer_outputs[-2].T) + (2 * lambda_reg * W[-1]))
     del_b.append(1 / n * (G @ np.ones((n, 1))))
     G = W[-1].T @ G
     G = G * (layer_outputs[-2] > 0).astype(int)
@@ -156,7 +156,7 @@ def ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
         G = G * (layer_outputs[l - 1] > 0).astype(int)
 
     # last layer
-    del_gamma.append((1 / n * G * S_hat[l]) @ np.ones((n, 1)))
+    del_gamma.append((1 / n * G * S_hat[0]) @ np.ones((n, 1)))
     del_beta.append(1 / n * (G @ np.ones((n, 1))))
     G = G * (gamma[0] @ np.ones((n, 1)).T)
     G = BatchNormBackPass(n, G, S[0], mu[0], var[0])
@@ -252,7 +252,8 @@ def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda
             # update the weights
             batch_X = train_X[:, batch[0]:batch[1]]
             batch_Y = train_Y[:, batch[0]:batch[1]]
-            del_w, del_b, del_gamma, del_beta, mu, var = ComputeGradientsBatchNorm(batch_X, batch_Y, W, b, gamma, beta, lambda_reg)
+            del_w, del_b, del_gamma, del_beta, mu, var = ComputeGradientsBatchNorm(batch_X, batch_Y, W, b, gamma, beta,
+                                                                                   lambda_reg)
             for i in range(len(W)):
                 W[i] = W[i] - eta * del_w[i]
                 b[i] = b[i] - eta * del_b[i]
@@ -316,11 +317,13 @@ def ComputeAccuracy(X, y, W, b):
     correct = (predictions == y).sum()
     return correct / len(y)
 
+
 def ComputeAccuracyBatchNorm(X, y, W, b, gamma, beta):
     assert len(y) == X.shape[1]
     predictions = np.argmax(forward_pass_batch_norm(X, W, b, gamma, beta)[0][-1], axis=0)
     correct = (predictions == y).sum()
     return correct / len(y)
+
 
 def ComputeCostBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
     assert X.shape[1] == Y.shape[1]
