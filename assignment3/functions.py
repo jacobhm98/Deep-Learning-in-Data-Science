@@ -67,6 +67,24 @@ def initialize_network_params(d, hidden_layer_sizes, k):
     return W, b
 
 
+def initialize_network_params_batch_norm(d, hidden_layer_sizes, k):
+    W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
+    b = [np.zeros((hidden_layer_sizes[0], 1))]
+    gamma = [np.ones((hidden_layer_sizes[0], 1))]
+    beta = [np.zeros((hidden_layer_sizes[0], 1))]
+
+    for i in range(1, len(hidden_layer_sizes)):
+        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
+                                  (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+        b.append(np.zeros((hidden_layer_sizes[i], 1)))
+        gamma.append(np.ones((hidden_layer_sizes[i], 1)))
+        beta.append(np.zeros((hidden_layer_sizes[i], 1)))
+
+    W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+    b.append(np.zeros((k, 1)))
+    return W, b, gamma, beta
+
+
 def forward_pass(X, W, b):
     layer_outputs = [X]
     for l in range(len(W) - 1):
@@ -77,16 +95,22 @@ def forward_pass(X, W, b):
     return layer_outputs[1::]
 
 
-def forward_pass_batch_norm(X, W, b, gamma, beta):
+def forward_pass_batch_norm(X, W, b, gamma, beta, mu=None, var=None):
+    if mu is None and var is None:
+        create_mu = True
+    else:
+        create_mu = False
     S = []
     S_hat = []
     X = [X]
-    mu = []
-    var = []
+    if create_mu:
+        mu = []
+        var = []
     for l in range(len(W) - 1):
         S.append(W[l] @ X[l] + b[l])
-        mu.append(np.mean(S[l], axis=1))
-        var.append(np.var(S[l], axis=1))
+        if create_mu:
+            mu.append(np.mean(S[l], axis=1).reshape((-1, 1)))
+            var.append(np.var(S[l], axis=1))
         S_hat.append(BatchNormalize(S[l], mu[l], var[l]))
         S_tilde = gamma[l] * S_hat[l] + beta[l]
         X.append(np.maximum(0, S_tilde))
@@ -96,14 +120,14 @@ def forward_pass_batch_norm(X, W, b, gamma, beta):
 
 
 def BatchNormalize(s, mu, var):
-    return np.power(np.diag(var + np.finfo(float).eps), -0.5) @ (s - mu)
+    return np.diag(np.power(var + np.finfo(float).eps, -0.5)) @ (s - mu)
 
 
 def BatchNormBackPass(n, G, S, mu, var):
     sigma_1 = np.power(var + np.finfo(float).eps, -0.5).T
     sigma_2 = np.power(var + np.finfo(float).eps, -1.5).T
-    G_1 = G * (sigma_1 @ np.ones((n, 1)).T)
-    G_2 = G * (sigma_2 @ np.ones((n, 1)).T)
+    G_1 = G * (sigma_1.reshape((-1, 1)) @ np.ones((n, 1)).T)
+    G_2 = G * (sigma_2.reshape((-1, 1)) @ np.ones((n, 1)).T)
     D = S - (mu @ np.ones((n, 1)).T)
     c = (G_2 * D) @ np.ones((n, 1))
     return G_1 - 1 / n * (G_1 @ np.ones((n, 1)) @ np.ones((n, 1)).T) - 1 / n * D * (c @ np.ones((n, 1)).T)
@@ -121,17 +145,25 @@ def ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
     del_b.append(1 / n * (G @ np.ones((n, 1))))
     G = W[-1].T @ G
     G = G * (layer_outputs[-2] > 0).astype(int)
-    for l in range(len(W) - 1, 0, -1):
-        del_gamma.append((1 / n * G * S_hat) @ np.ones((n, 1)))
+    for l in range(len(W) - 2, 0, -1):
+        del_gamma.append((1 / n * G * S_hat[l]) @ np.ones((n, 1)))
         del_beta.append(1 / n * (G @ np.ones((n, 1))))
         G = G * (gamma[l] @ np.ones((n, 1)).T)
         G = BatchNormBackPass(n, G, S[l], mu[l], var[l])
         del_W.append((1 / n * G @ layer_outputs[l - 1].T) + (2 * lambda_reg * W[l]))
         del_b.append(1 / n * (G @ np.ones((n, 1))))
-        if l > 1:
-            G = W[l].T @ G
-            G = G * (layer_outputs[l - 1] > 0).astype(int)
-    return del_W, del_b, del_gamma, del_b, mu, var
+        G = W[l].T @ G
+        G = G * (layer_outputs[l - 1] > 0).astype(int)
+
+    # last layer
+    del_gamma.append((1 / n * G * S_hat[l]) @ np.ones((n, 1)))
+    del_beta.append(1 / n * (G @ np.ones((n, 1))))
+    G = G * (gamma[0] @ np.ones((n, 1)).T)
+    G = BatchNormBackPass(n, G, S[0], mu[0], var[0])
+    del_W.append((1 / n * G @ X.T) + (2 * lambda_reg * W[0]))
+    del_b.append(1 / n * (G @ np.ones((n, 1))))
+
+    return del_W[::-1], del_b[::-1], del_gamma[::-1], del_b[::-1], mu, var
 
 
 def ComputeGradients(X, Y, W, b, lambda_reg):
@@ -152,14 +184,17 @@ def ComputeGradients(X, Y, W, b, lambda_reg):
     return del_W[::-1], del_b[::-1]
 
 
-def sanity_check_batch_norm(X, Y, W, b, lambda_reg=0, eta=0.01):
+def sanity_check_batch_norm(X, Y, W, b, gamma, beta, lambda_reg=0, eta=0.01):
     loss = np.zeros(1000)
     for epoch in range(1000):
-        del_W, del_b = ComputeGradients(X, Y, W, b, lambda_reg)
+        del_W, del_b, del_gamma, del_beta, _, _ = ComputeGradientsBatchNorm(X, Y, W, b, gamma, beta, lambda_reg)
         for i in range(len(W)):
             W[i] = W[i] - eta * del_W[i]
             b[i] = b[i] - eta * del_b[i]
-        loss[epoch] = ComputeCost(X, Y, W, b, lambda_reg)
+        for i in range(len(gamma)):
+            gamma[i] = gamma[i] - eta * del_gamma[i]
+            beta[i] = beta[i] - eta * del_beta[i]
+        loss[epoch] = ComputeCostBatchNorm(X, Y, W, b, gamma, beta, lambda_reg)
     return loss
 
 
@@ -172,6 +207,58 @@ def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
             b[i] = b[i] - eta * del_b[i]
         loss[epoch] = ComputeCost(X, Y, W, b, lambda_reg)
     return loss
+
+
+def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda_reg):
+    # unpack arguments
+    n_batch, etas, n_cycles = GDparams
+    eta_min, eta_max, step_size = etas
+    train_X, train_Y, train_y = train_set
+    val_X, val_Y, val_y = val_set
+
+    n_batches_per_epoch = int(train_X.shape[1] / n_batch)
+    batches = [(x * n_batch, (x + 1) * n_batch - 1) for x in list(range(n_batches_per_epoch))]
+
+    # figure out when we should log performance
+    log_interval = int(2 * step_size / 10)
+
+    # administrative vars
+    train_cost = []
+    val_cost = []
+    train_accuracy = []
+    val_accuracy = []
+    iterations = 0
+    while True:
+        train_X, train_Y, train_y = shuffle(train_X.T, train_Y.T, train_y)
+        train_X = train_X.T
+        train_Y = train_Y.T
+        for batch in batches:
+            # cyclical training rate
+            cycle = floor(1 + iterations / (2 * step_size))
+            if cycle > n_cycles:
+                return W, b, train_cost, val_cost, train_accuracy, val_accuracy
+            x = abs(iterations / step_size - 2 * cycle + 1)
+            eta = eta_min + (eta_max - eta_min) * max(0, 1 - x)
+
+            # assess cost 10 times per cycle
+            if iterations % log_interval == 0:
+                train_cost.append(ComputeCostBatchNorm(train_X, train_Y, W, b, gamma, beta, lambda_reg))
+                val_cost.append(ComputeCostBatchNorm(val_X, val_Y, W, b, gamma, beta, lambda_reg))
+                train_accuracy.append(ComputeAccuracyBatchNorm(train_X, train_y, W, b, gamma, beta))
+                val_accuracy.append(ComputeAccuracyBatchNorm(val_X, val_y, W, b, gamma, beta))
+
+            iterations += 1
+
+            # update the weights
+            batch_X = train_X[:, batch[0]:batch[1]]
+            batch_Y = train_Y[:, batch[0]:batch[1]]
+            del_w, del_b, del_gamma, del_beta, mu, var = ComputeGradientsBatchNorm(batch_X, batch_Y, W, b, gamma, beta, lambda_reg)
+            for i in range(len(W)):
+                W[i] = W[i] - eta * del_w[i]
+                b[i] = b[i] - eta * del_b[i]
+            for i in range(len(gamma)):
+                gamma[i] = gamma[i] - eta * del_gamma[i]
+                beta[i] = beta[i] - eta * del_beta[i]
 
 
 def MiniBatchGD(train_set, val_set, GDparams, W, b, lambda_reg):
@@ -228,6 +315,23 @@ def ComputeAccuracy(X, y, W, b):
     predictions = np.argmax(forward_pass(X, W, b)[-1], axis=0)
     correct = (predictions == y).sum()
     return correct / len(y)
+
+def ComputeAccuracyBatchNorm(X, y, W, b, gamma, beta):
+    assert len(y) == X.shape[1]
+    predictions = np.argmax(forward_pass_batch_norm(X, W, b, gamma, beta)[0][-1], axis=0)
+    correct = (predictions == y).sum()
+    return correct / len(y)
+
+def ComputeCostBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
+    assert X.shape[1] == Y.shape[1]
+    weight_sum = 0
+    for w in W:
+        weight_sum += np.sum(w ** 2)
+    reg_term = lambda_reg * weight_sum
+    predictions = forward_pass_batch_norm(X, W, b, gamma, beta)[0][-1]
+    ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
+    total_cost = ce_term + reg_term
+    return total_cost
 
 
 def ComputeCost(X, Y, W, b, lambda_reg):
