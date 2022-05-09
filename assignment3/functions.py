@@ -40,7 +40,8 @@ def search_range_of_lambda(l_min, l_max, num_values, train_set, val_set):
     GDParams = [100, etas, 2]
     for i in range(len(lambdas)):
         W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [50, 50], train_Y.shape[0])
-        _, _, _, _, _, _, _, val_accuracy = MiniBatchGDBatchNorm(train_set, val_set, GDParams, W, b, gamma, beta, lambdas[i])
+        _, _, _, _, _, _, _, val_accuracy = MiniBatchGDBatchNorm(train_set, val_set, GDParams, W, b, gamma, beta,
+                                                                 lambdas[i])
         results[lambdas[i]] = np.amax(val_accuracy)
     return results
 
@@ -53,35 +54,67 @@ def normalize(X):
     return X
 
 
-def initialize_network_params(d, hidden_layer_sizes, k):
-    W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
-    b = [np.zeros((hidden_layer_sizes[0], 1))]
+def initialize_network_params(d, hidden_layer_sizes, k, sig=None):
+    # HE initialization
+    if sig is None:
+        W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
+        b = [np.zeros((hidden_layer_sizes[0], 1))]
 
-    for i in range(1, len(hidden_layer_sizes)):
-        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
-                                  (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
-        b.append(np.zeros((hidden_layer_sizes[i], 1)))
+        for i in range(1, len(hidden_layer_sizes)):
+            W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
+                                      (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+            b.append(np.zeros((hidden_layer_sizes[i], 1)))
 
-    W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
-    b.append(np.zeros((k, 1)))
+        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+        b.append(np.zeros((k, 1)))
+    # Decidedly not HEeeeeee initialization
+    else:
+        W = [np.random.normal(0, sig, (hidden_layer_sizes[0], d))]
+        b = [np.zeros((hidden_layer_sizes[0], 1))]
+
+        for i in range(1, len(hidden_layer_sizes)):
+            W.append(np.random.normal(0, sig,
+                                      (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+            b.append(np.zeros((hidden_layer_sizes[i], 1)))
+
+        W.append(np.random.normal(0, sig, (k, hidden_layer_sizes[-1])))
+        b.append(np.zeros((k, 1)))
+
     return W, b
 
 
-def initialize_network_params_batch_norm(d, hidden_layer_sizes, k):
-    W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
-    b = [np.zeros((hidden_layer_sizes[0], 1))]
-    gamma = [np.ones((hidden_layer_sizes[0], 1))]
-    beta = [np.zeros((hidden_layer_sizes[0], 1))]
+def initialize_network_params_batch_norm(d, hidden_layer_sizes, k, sig=None):
+    if sig is None:
+        W = [np.random.normal(0, 2 / sqrt(d), (hidden_layer_sizes[0], d))]
+        b = [np.zeros((hidden_layer_sizes[0], 1))]
+        gamma = [np.ones((hidden_layer_sizes[0], 1))]
+        beta = [np.zeros((hidden_layer_sizes[0], 1))]
 
-    for i in range(1, len(hidden_layer_sizes)):
-        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
-                                  (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
-        b.append(np.zeros((hidden_layer_sizes[i], 1)))
-        gamma.append(np.ones((hidden_layer_sizes[i], 1)))
-        beta.append(np.zeros((hidden_layer_sizes[i], 1)))
+        for i in range(1, len(hidden_layer_sizes)):
+            W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[i - 1]),
+                                      (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+            b.append(np.zeros((hidden_layer_sizes[i], 1)))
+            gamma.append(np.ones((hidden_layer_sizes[i], 1)))
+            beta.append(np.zeros((hidden_layer_sizes[i], 1)))
 
-    W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
-    b.append(np.zeros((k, 1)))
+        W.append(np.random.normal(0, 2 / sqrt(hidden_layer_sizes[-1]), (k, hidden_layer_sizes[-1])))
+        b.append(np.zeros((k, 1)))
+    else:
+        W = [np.random.normal(0, sig, (hidden_layer_sizes[0], d))]
+        b = [np.zeros((hidden_layer_sizes[0], 1))]
+        gamma = [np.ones((hidden_layer_sizes[0], 1))]
+        beta = [np.zeros((hidden_layer_sizes[0], 1))]
+
+        for i in range(1, len(hidden_layer_sizes)):
+            W.append(np.random.normal(0, sig,
+                                      (hidden_layer_sizes[i], hidden_layer_sizes[i - 1])))
+            b.append(np.zeros((hidden_layer_sizes[i], 1)))
+            gamma.append(np.ones((hidden_layer_sizes[i], 1)))
+            beta.append(np.zeros((hidden_layer_sizes[i], 1)))
+
+        W.append(np.random.normal(0, sig, (k, hidden_layer_sizes[-1])))
+        b.append(np.zeros((k, 1)))
+
     return W, b, gamma, beta
 
 
