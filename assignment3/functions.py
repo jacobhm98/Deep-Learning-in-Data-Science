@@ -261,8 +261,8 @@ def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda
                 mu_avg = mu
                 var_avg = var
             else:
-                mu_avg = alpha * mu_avg + (1 - alpha) * mu
-                var_avg = alpha * var_avg + (1 - alpha) * var
+                mu_avg = [alpha * x + (1 - alpha) * y for x, y in zip(mu_avg, mu)]
+                var_avg = [alpha * x + (1 - alpha) * y for x, y in zip(var_avg, var)]
 
             # update the weights
             for i in range(len(W)):
