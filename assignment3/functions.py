@@ -39,8 +39,8 @@ def search_range_of_lambda(l_min, l_max, num_values, train_set, val_set):
     etas = [1e-5, 1e-1, 2 * floor(train_X.shape[1] / 100)]
     GDParams = [100, etas, 2]
     for i in range(len(lambdas)):
-        W, b = initialize_network_params(60, train_X.shape[0], train_Y.shape[0])
-        _, _, _, _, _, val_accuracy = MiniBatchGD(train_set, val_set, GDParams, W, b, lambdas[i])
+        W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [50, 50], train_Y.shape[0])
+        _, _, _, _, _, _, _, val_accuracy = MiniBatchGDBatchNorm(train_set, val_set, GDParams, W, b, gamma, beta, lambdas[i])
         results[lambdas[i]] = np.amax(val_accuracy)
     return results
 

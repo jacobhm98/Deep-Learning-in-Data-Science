@@ -88,7 +88,8 @@ def exercise_3():
     test_X = test_X[:, 1000:]
     test_Y = test_Y[:, 1000:]
     test_y = test_y[1000:]
-    W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [50], train_Y.shape[0])
+    W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [50, 30, 20, 20, 10, 10, 10, 10],
+                                                             train_Y.shape[0])
     etas = [1e-5, 1e-1, 5 * 450]
     GDParams = [100, etas, 2]
     W, b, mu, var, train_cost, val_cost, train_accuracy, val_accuracy = MiniBatchGDBatchNorm(
@@ -100,8 +101,44 @@ def exercise_3():
     print(ComputeAccuracyBatchNorm(test_X, test_y, W, b, gamma, beta, mu, var))
 
 
+def coarse_search():
+    train_X, train_Y, train_y = combine_train_sets()
+    test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+    val_X = test_X[:, :1000]
+    val_Y = test_Y[:, :1000]
+    val_y = test_y[:1000]
+    test_X = test_X[:, 1000:]
+    test_Y = test_Y[:, 1000:]
+    test_y = test_y[1000:]
+    performance_of_lambdas = search_range_of_lambda(-5, -1, 10, [train_X, train_Y, train_y], [val_X, val_Y, val_y])
+    print(performance_of_lambdas)
+    items = performance_of_lambdas.items()
+    items = sorted(items)
+    x, y = zip(*items)
+    plt.plot(x, y)
+    plt.show()
+
+
+def fine_search():
+    train_X, train_Y, train_y = combine_train_sets()
+    test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+    val_X = test_X[:, :1000]
+    val_Y = test_Y[:, :1000]
+    val_y = test_y[:1000]
+    test_X = test_X[:, 1000:]
+    test_Y = test_Y[:, 1000:]
+    test_y = test_y[1000:]
+    performance_of_lambdas = search_range_of_lambda(-4, -2, 30, [train_X, train_Y, train_y], [val_X, val_Y, val_y])
+    print(performance_of_lambdas)
+    items = performance_of_lambdas.items()
+    items = sorted(items)
+    x, y = zip(*items)
+    plt.plot(x, y)
+    plt.show()
+
+
 def main():
-    exercise_3()
+    coarse_search()
 
 
 main()

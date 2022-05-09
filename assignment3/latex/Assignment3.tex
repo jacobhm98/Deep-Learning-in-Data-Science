@@ -7,61 +7,81 @@
 \usepackage{graphicx}
 \graphicspath{{../figures/}}
 \author{Jacob Heden Malm}
-\title{DD2424 Assignment 2}
+\title{DD2424 Assignment 3}
 \begin{document}
 \maketitle
 
 \section{Analytic gradient computations}
-Since I wrote my code in python I could not use the provided ComputeGradsNum() method. Instead I performed the sanity check as specified in the lab instructions to check that my gradient computations were correct. I wrote a method called sanity\_check() where I passed in 100 data points and attempted to get my loss values as low as possible. I did this by training on the entire batch of data passed in for 1000 epochs and monitoring the development of the loss values.\\
+
+Since I wrote my code in python I could not use the provided ComputeGradsNum() method. Instead I performed a sanity check by attempting to over fit my network to a small amount of training examples and monitoring the development of the loss value. I wrote a method called sanity\_check() where I passed in 100 data points and attempted to get my loss values as low as possible. I did this by training on the entire batch of data passed in for 1000.\\
 
 Here is an example of the development of the loss values through training on this very limited data set.
 
 \includegraphics[width=\textwidth]{sanity_check.png}
 
+
 The shape of the development of the loss function is almost exactly what we'd expect a nice satisfying 1/x curve. This suggests, since the derivative of this curve is logarithmic, that the rate of improvement decreases the more we have already learned, which makes sense. We also manage to get almost arbitrarily close to 0, suggesting that the network learns to recognize the training set perfectly, which allows us to conclude that the gradient computations are in fact working.
 
+\includegraphics[width=\textwidth]{sanity_check_lambda-01.png}
 
-\section{Cyclical learning rate on a single batch of data}
-The cost and accuracy of our network trained with step size = 500, trained for one cycle look as follows:
 
-\includegraphics[width=\textwidth]{ns=500_accuracy.png}
-\includegraphics[width=\textwidth]{ns=500_cost.png}
+When we set lambda to 0.01 we can see that we do not reach quite as low a value in our loss development, as expected, however we are still able to fit our net arbitrarily well.
 
-Here we can see that the loss and accuracy are almost monotonically decreasing/decreasing throughout a cycle. We also see that for this data/regularization parameter setting there is a moderate degree of overfitting. Here, lambda is as specified 0.01.\\
 
-This is how the graphs look when we increase the stepsize to 800, and also train for 3 complete cycles.
+\section{Training a k-layer network}
 
-\includegraphics[width=\textwidth]{ns=800_accuracy.png}
+I began by training a 2 layer network with 1 hidden layer of 50 nodes. 
+\includegraphics[width=\textwidth]{cost_k=1.png}
+\includegraphics[width=\textwidth]{accuracy_k=1.png}\\
+
+We can compare this with the results we got for a similar network from assignment 2\\
 \includegraphics[width=\textwidth]{ns=800_cost.png}
+\includegraphics[width=\textwidth]{ns=800_accuracy.png}
 
-Here we can clearly see the cycle of learning rate reflected in the graphs. One cycle of learning rate carries with it both an increase and decrease in cost and accuracy, however as specified in the instructions, if we cut off the training at the end of one of these cycles we are able to "time" the conclusion of training at a point where our learned weights are optimal.
+The results look pretty similar.\\
 
-\section{Coarse search}
+If we add a second hidden layer also of 50 nodes, our metrics look as follows\\
+\includegraphics[width=\textwidth]{cost_k=2.png}
+\includegraphics[width=\textwidth]{accuracy_k=2.png}
+These graphs look pretty nice, the decrease in over fitting can be attributed to me switching to using the full training set.\\
 
-I first performed a coarse random search for the optimal $\lambda$ settings. I tried 10 different lambda samples uniformly sampled from the range 1e-5 and 1e-1, trained for 2 cycles each. The accuracy of these settings on the validation set are shown here:
+
+The accuracy this 3 layer network exhibits on the test set is 0.5253333333333333. This test accuracy is however higher than my most performant network from assignment 2, suggesting that there's some value in increasing the depth of the network. If we investigate this assumption by attempting to train a 9 layer network, we see the following results\\
+
+
+\includegraphics[width=\textwidth]{cost_k=9.png}
+\includegraphics[width=\textwidth]{accuracy_k=9.png}
+
+The test accuracy of this 9 layer network was 0.4488888888888889, almost an 8\% point decrease from our 3 layer network, no bueno.
+
+\section{Implementing batch normalization}
+
+I performed the same sanity check as before, but on a network with batch normalization.
+
+\includegraphics[width=\textwidth]{sanity_check_batch_norm.png}
+
+We can see that the loss development looks the same as previously, suggesting that our gradient computations with batch normalization work well.
+
+\section{Training a k-layer network with batch normalization}
+
+Test accuracy on 2 layer network: 0.5173333333333333
+Test accuracy on 3 layer network: 0.5361111111111111
+
+\subsection{Search for optimal lambda value}
+
+I began by performing a coarse search with 10 uniformly sampled lambda values from the range 1E-5, 1E-5. The validation accuracy is plotted here.
 
 \includegraphics[width=\textwidth]{coarse_search.png}
 
-The 3 best performing $lambda$ values were 1.09e-05,0.00091, and 0.0013. In general, outside of this neighbourhood the performance decreased monotonically. This suggests that we should concentrate our fine search in the vicinity of these points.
+As we can see the area of interest is roughly 0-0.015, with more emphasis to be placed on the upper end of this range.\\
 
-
-\section{Fine search}
-
-I performed the fine search by assessing accuracy on 30 samples for the $\lambda$ parameter sampled uniformly between 1e-5 and 1e-3. The accuracy on the validation set is shown here:
+Thus I performed a fine search by pulling 30 samples from a uniform distribution with domain [1E-4, 1E-2].
 
 
 \includegraphics[width=\textwidth]{fine_search.png}
 
-We can see that the relationship between lambda and performance is not as easy to assess here. In general, we reach high values when lambda is very small, but there is a large degree of variance here, and then as lambda increases at first performance decreases, until we reach roughly 0.0007, where it peaks again. The 3 highest values for lambda found were 0.0009, 3.3e-5, and 0.00072. 
 
-
-\section{Highest performing network}
-I chose $\lambda$ to be 0.0009 based on my random searches for hyperparameter settings. I used a hidden layer of 60 nodes, and 5 cycles of training to train my highest performing network. The graphs can be seen here
-
-\includegraphics[width=\textwidth]{best_network_accuracy.png}
-\includegraphics[width=\textwidth]{best_network_loss.png}
-
-The best networks final accuracy on the test set was: 0.5263333333333333.
+Test accuracy of 3 layer network with optimal lambda:
 
 
 \end{document}
