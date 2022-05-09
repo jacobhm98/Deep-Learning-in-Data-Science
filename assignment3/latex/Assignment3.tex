@@ -56,6 +56,8 @@ The test accuracy of this 9 layer network was 0.4488888888888889, almost an 8\% 
 
 \section{Implementing batch normalization}
 
+I did not run into any troubles adapting my existing methods to include batch normalization. However, since I did not find instruction on how to initialize the gamma and beta parameters, I initialized beta's to 0, and gamma to 1's.\\
+
 I performed the same sanity check as before, but on a network with batch normalization.
 
 \includegraphics[width=\textwidth]{sanity_check_batch_norm.png}
@@ -64,8 +66,12 @@ We can see that the loss development looks the same as previously, suggesting th
 
 \section{Training a k-layer network with batch normalization}
 
-Test accuracy on 2 layer network: 0.5173333333333333
-Test accuracy on 3 layer network: 0.5361111111111111
+We can re-attempt the previous training runs with batch normalization. Our 3 layer network with hidden layers = [50, 50] performs as follows:
+
+\includegraphics[width=\textwidth]{cost_k=2_batch_norm.png}
+\includegraphics[width=\textwidth]{accuracy_k=2_batch_norm.png}
+
+with a reported test accuracy of 0.5361111111111111.
 
 \subsection{Search for optimal lambda value}
 
@@ -78,10 +84,23 @@ As we can see the area of interest is roughly 0-0.015, with more emphasis to be 
 Thus I performed a fine search by pulling 30 samples from a uniform distribution with domain [1E-4, 1E-2].
 
 
-\includegraphics[width=\textwidth]{fine_search.png}
 
 
-Test accuracy of 3 layer network with optimal lambda:
+This fine search indicated that my optimal lambda setting would be ca. 0.0048. \\
+
+The training metrics for my 3 layer network trained with this lambda are reported here:\\
+
+\includegraphics[width=\textwidth]{optimal_cost_k=3.png}
+\includegraphics[width=\textwidth]{optimal_accuracy_k=3.png}
+
+The test accuracy of this trained network is 0.54, the highest observed yet!\\
+
+When training the 9 layer network of before with the same settings, this is what we see\\
+
+\includegraphics[width=\textwidth]{optimal_cost_k=9.png}
+\includegraphics[width=\textwidth]{optimal_accuracy_k=9.png}
+
+The reported test accuracy of this network is 0.5224444444444445, a substantial improvement.
 
 
 \end{document}
