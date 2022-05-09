@@ -209,7 +209,7 @@ def sanity_check(X, Y, W, b, lambda_reg=0, eta=0.01):
     return loss
 
 
-def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda_reg):
+def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda_reg, alpha=0.9):
     # unpack arguments
     n_batch, etas, n_cycles = GDparams
     eta_min, eta_max, step_size = etas
@@ -228,6 +228,8 @@ def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda
     train_accuracy = []
     val_accuracy = []
     iterations = 0
+    mu_avg = None
+    var_avg = None
     while True:
         train_X, train_Y, train_y = shuffle(train_X.T, train_Y.T, train_y)
         train_X = train_X.T
@@ -236,7 +238,7 @@ def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda
             # cyclical training rate
             cycle = floor(1 + iterations / (2 * step_size))
             if cycle > n_cycles:
-                return W, b, train_cost, val_cost, train_accuracy, val_accuracy
+                return W, b, mu_avg, var_avg, train_cost, val_cost, train_accuracy, val_accuracy
             x = abs(iterations / step_size - 2 * cycle + 1)
             eta = eta_min + (eta_max - eta_min) * max(0, 1 - x)
 
@@ -249,11 +251,20 @@ def MiniBatchGDBatchNorm(train_set, val_set, GDparams, W, b, gamma, beta, lambda
 
             iterations += 1
 
-            # update the weights
             batch_X = train_X[:, batch[0]:batch[1]]
             batch_Y = train_Y[:, batch[0]:batch[1]]
             del_w, del_b, del_gamma, del_beta, mu, var = ComputeGradientsBatchNorm(batch_X, batch_Y, W, b, gamma, beta,
                                                                                    lambda_reg)
+
+            # exponential sliding average for mu and var
+            if mu_avg is None and var_avg is None:
+                mu_avg = mu
+                var_avg = var
+            else:
+                mu_avg = alpha * mu_avg + (1 - alpha) * mu
+                var_avg = alpha * var_avg + (1 - alpha) * var
+
+            # update the weights
             for i in range(len(W)):
                 W[i] = W[i] - eta * del_w[i]
                 b[i] = b[i] - eta * del_b[i]
@@ -318,20 +329,20 @@ def ComputeAccuracy(X, y, W, b):
     return correct / len(y)
 
 
-def ComputeAccuracyBatchNorm(X, y, W, b, gamma, beta):
+def ComputeAccuracyBatchNorm(X, y, W, b, gamma, beta, mu=None, var=None):
     assert len(y) == X.shape[1]
-    predictions = np.argmax(forward_pass_batch_norm(X, W, b, gamma, beta)[0][-1], axis=0)
+    predictions = np.argmax(forward_pass_batch_norm(X, W, b, gamma, beta, mu, var)[0][-1], axis=0)
     correct = (predictions == y).sum()
     return correct / len(y)
 
 
-def ComputeCostBatchNorm(X, Y, W, b, gamma, beta, lambda_reg):
+def ComputeCostBatchNorm(X, Y, W, b, gamma, beta, lambda_reg, mu=None, var=None):
     assert X.shape[1] == Y.shape[1]
     weight_sum = 0
     for w in W:
         weight_sum += np.sum(w ** 2)
     reg_term = lambda_reg * weight_sum
-    predictions = forward_pass_batch_norm(X, W, b, gamma, beta)[0][-1]
+    predictions = forward_pass_batch_norm(X, W, b, gamma, beta, mu, var)[0][-1]
     ce_term = - np.log((Y * predictions).sum(axis=0)).mean()
     total_cost = ce_term + reg_term
     return total_cost

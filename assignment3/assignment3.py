@@ -74,12 +74,12 @@ def exercise_two_c():
 def check_batch_norm():
     train_X, train_Y, train_y = unpack_batch(LoadBatch('data_batch_1'))
     W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [30, 30], train_Y.shape[0])
-    loss_development = sanity_check_batch_norm(train_X[:, :100], train_Y[:, :100], W, b, gamma, beta, 0.01)
+    loss_development = sanity_check_batch_norm(train_X[:, :100], train_Y[:, :100], W, b, gamma, beta, 0)
     plt.plot(list(range(len(loss_development))), loss_development, label='training loss')
     plt.show()
 
 
-def exercise_3():
+def exercise_3a():
     train_X, train_Y, train_y = combine_train_sets()
     test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
     val_X = test_X[:, :1000]
@@ -91,17 +91,16 @@ def exercise_3():
     W, b, gamma, beta = initialize_network_params_batch_norm(train_X.shape[0], [50, 50], train_Y.shape[0])
     etas = [1e-5, 1e-1, 5 * 450]
     GDParams = [100, etas, 2]
-    W, b, train_cost, val_cost, train_accuracy, val_accuracy = MiniBatchGDBatchNorm([train_X, train_Y, train_y],
+    W, b, train_cost, mu, var, val_cost, train_accuracy, val_accuracy = MiniBatchGDBatchNorm([train_X, train_Y, train_y],
                                                                                     [val_X, val_Y, val_y], GDParams, W,
                                                                                     b, gamma, beta, 0.005)
     plot_train_and_val_performance(train_cost, val_cost, 'Cost')
     plot_train_and_val_performance(train_accuracy, val_accuracy, 'Accuracy')
-    print(train_accuracy)
-    print(ComputeAccuracyBatchNorm(test_X, test_y, W, b, gamma, beta))
+    print(ComputeAccuracyBatchNorm(test_X, test_y, W, b, gamma, beta, mu, var))
 
 
 def main():
-    exercise_3()
+    exercise_3a()
 
 
 main()
