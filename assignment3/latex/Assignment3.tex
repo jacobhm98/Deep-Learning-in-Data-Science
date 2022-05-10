@@ -71,18 +71,19 @@ We can re-attempt the previous training runs with batch normalization. Our 3 lay
 \includegraphics[width=\textwidth]{cost_k=2_batch_norm.png}
 \includegraphics[width=\textwidth]{accuracy_k=2_batch_norm.png}
 
-with a reported test accuracy of 0.5361111111111111.
+with a reported test accuracy of 0.5361111111111111. This seems to be a slight improvement to previously.
 
 \subsection{Search for optimal lambda value}
 
-I began by performing a coarse search with 10 uniformly sampled lambda values from the range 1E-5, 1E-5. The validation accuracy is plotted here.
+I began by performing a coarse search with 10 uniformly sampled lambda values from the range 1E-1, 1E-5. The validation accuracy is plotted here.
 
 \includegraphics[width=\textwidth]{coarse_search.png}
 
 As we can see the area of interest is roughly 0-0.015, with more emphasis to be placed on the upper end of this range.\\
 
-Thus I performed a fine search by pulling 30 samples from a uniform distribution with domain [1E-4, 1E-2].
+Thus I performed a finer search by pulling 30 samples from a uniform distribution with domain [1E-4, 1E-2].\\
 
+\includegraphics[width=\textwidth]{fine_search.png}
 
 
 
@@ -102,5 +103,23 @@ When training the 9 layer network of before with the same settings, this is what
 
 The reported test accuracy of this network is 0.5224444444444445, a substantial improvement.
 
+\subsection{Batch normalization conclusion}
+
+When comparing the graphs of the 3 layer networks with and without batch normalizaton, we can conclude that training with batch normalization seems to decrease over fitting, increase performance, and generally smoothen the training curves a bit. This suggests that training becomes more robust and regularized with batch normalization, even for the 3 layer networks.\\
+
+When assessing the 9-layer network, the difference is night and day in performance numbers. We see more than a 15\% increase in test accuracy with batch normalization. This again confirms that training with batch normalization makes training more robust.
+
+\section{Sensitivity to initialization}
+
+
+Batch norm
+Sig 1e-1 acc = 0.5484444444444444
+Sig 1e-3 acc = 0.5396666666666666
+Sig 1e-4 acc = 0.5425555555555556
+
+No batch norm
+Sig 1e-1 acc = 0.5341111111111111
+Sig 1e-3 acc = 0.5271111111111111
+Sig 1e-4 acc = 0.09977777777777778
 
 \end{document}

@@ -123,6 +123,29 @@ def exercise_3_best_lambda():
     print(ComputeAccuracyBatchNorm(test_X, test_y, W, b, gamma, beta, mu, var))
 
 
+def sensitivity_to_initialization():
+    train_X, train_Y, train_y = combine_train_sets()
+    test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
+    val_X = test_X[:, :1000]
+    val_Y = test_Y[:, :1000]
+    val_y = test_y[:1000]
+    test_X = test_X[:, 1000:]
+    test_Y = test_Y[:, 1000:]
+    test_y = test_y[1000:]
+    etas = [1e-5, 1e-1, 5 * 450]
+    GDParams = [100, etas, 3]
+    sigs = [1e-1, 1e-3, 1e-4]
+    for sig in sigs:
+        W, b = initialize_network_params(train_X.shape[0], [50, 50], train_Y.shape[0], sig)
+        W, b, train_cost, val_cost, train_accuracy, val_accuracy = MiniBatchGD(
+            [train_X, train_Y, train_y],
+            [val_X, val_Y, val_y], GDParams, W,
+            b, 0.0048)
+        plot_train_and_val_performance(train_cost, val_cost, 'Cost')
+        plot_train_and_val_performance(train_accuracy, val_accuracy, 'Accuracy')
+        print(ComputeAccuracy(test_X, test_y, W, b))
+
+
 def sensitivity_to_initialization_batch_norm():
     train_X, train_Y, train_y = combine_train_sets()
     test_X, test_Y, test_y = unpack_batch(LoadBatch('test_batch'))
@@ -184,7 +207,7 @@ def fine_search():
 
 
 def main():
-    sensitivity_to_initialization_batch_norm()
+    sensitivity_to_initialization()
 
 
 main()
