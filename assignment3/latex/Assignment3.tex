@@ -71,7 +71,7 @@ We can re-attempt the previous training runs with batch normalization. Our 3 lay
 \includegraphics[width=\textwidth]{cost_k=2_batch_norm.png}
 \includegraphics[width=\textwidth]{accuracy_k=2_batch_norm.png}
 
-with a reported test accuracy of 0.5361111111111111. This seems to be a slight improvement to previously.
+With a reported test accuracy of 0.5361111111111111. This seems to be a slight improvement to previously.
 
 \subsection{Search for optimal lambda value}
 
@@ -111,15 +111,34 @@ When assessing the 9-layer network, the difference is night and day in performan
 
 \section{Sensitivity to initialization}
 
+\subsection{Batch norm}
 
-Batch norm
-Sig 1e-1 acc = 0.5484444444444444
-Sig 1e-3 acc = 0.5396666666666666
-Sig 1e-4 acc = 0.5425555555555556
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-1_cost-.png}
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-1_accuracy-.png}
+Test accuracy sig 1e-1 acc = 0.5484444444444444\\
 
-No batch norm
-Sig 1e-1 acc = 0.5341111111111111
-Sig 1e-3 acc = 0.5271111111111111
+
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-3_cost-.png}
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-3_accuracy-.png}
+Test accuracy sig 1e-3 acc = 0.5396666666666666\\
+
+
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-4_cost-.png}
+\includegraphics[width=\textwidth]{batch_norm_sig=1e-4_accuracy-.png}
+Test accuracy sig 1e-4 acc = 0.5425555555555556\\
+
+\subsection{Without batch norm}
+
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-1_cost-.png}
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-1_accuracy-.png}
+Sig 1e-1 acc = 0.5341111111111111\\
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-3_cost-.png}
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-3_accuracy-.png}
+Sig 1e-3 acc = 0.5271111111111111\\
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-4_cost-.png}
+\includegraphics[width=\textwidth]{no_batch_norm_sig=1e-4_accuracy-.png}
 Sig 1e-4 acc = 0.09977777777777778
 
+
+As we can see here, training the network with batch normalization leads to a much more stable training loop for smaller standard deviations when initializing the network parameters. This suggests that batch normalization makes training more robust to initialization.
 \end{document}
