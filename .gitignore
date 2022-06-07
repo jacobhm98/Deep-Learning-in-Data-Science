@@ -9,3 +9,4 @@ __pycache__/
 venv/
 data/
 code.py
+goblet_book.txt
