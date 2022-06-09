@@ -16,7 +16,14 @@ def sanity_check_gradients():
     X = functions.one_hotify(X)
     Y = functions.one_hotify(Y)
     RNN = functions.initialize_parameters()
-    activations, loss = functions.forward_pass(RNN, X, Y)
-    del_RNN = functions.back_pass(RNN, activations, Y)
+    for i in range(1000):
+        activations, loss = functions.forward_pass(RNN, X, Y)
+        print(loss)
+        del_RNN = functions.back_pass(RNN, X, activations, Y)
+        #for key in del_RNN.keys():
+        #    RNN[key] = RNN[key] - functions.eta * del_RNN[key]
+        RNN['V'] = RNN['V'] - functions.eta * del_RNN['V']
+        RNN['W'] = RNN['W'] - functions.eta * del_RNN['W']
+        RNN['U'] = RNN['U'] - functions.eta * del_RNN['U']
 
 main()

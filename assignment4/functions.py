@@ -69,7 +69,7 @@ def ComputeCost(Y, predictions):
     return ce_term
 
 
-def back_pass(RNN, activations, labels, h_0=np.zeros(m)):
+def back_pass(RNN, X, activations, labels, h_0=np.zeros(m)):
     # activations[t][0] is a_t, activations[t][1] is h_t, activations[t][2] is x_t
     # Initialize ds thats gonna hold my grads
     del_RNN = {}
@@ -94,7 +94,7 @@ def back_pass(RNN, activations, labels, h_0=np.zeros(m)):
             del_RNN['W'] = del_RNN['W'] + del_a.T @ h_0.T
         else:
             del_RNN['W'] = del_RNN['W'] + del_a.T @ activations[t - 1][1].T
-        del_RNN['U'] = del_RNN['U'] + del_a.T @ activations[t][2].T
+        del_RNN['U'] = del_RNN['U'] + del_a.T @ X[:, t].reshape(-1, 1).T
         del_RNN['b'] = del_RNN['b'] + del_a.T
         return del_RNN
 
