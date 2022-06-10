@@ -5,7 +5,7 @@ import numpy as np
 
 # Constants
 m = 100
-eta = 0.1
+eta = 0.01
 seq_length = 25
 K = None
 
@@ -19,7 +19,7 @@ def convert_char_list_to_ints(chars, chars_to_int):
 def read_in_text(file_name):
     with open(file_name, 'r') as f:
         book_data = [char for char in f.read()]
-        return book_data, list(set(book_data))
+        return book_data, sorted(set(book_data))
 
 
 def get_maps(unique_list):
@@ -69,7 +69,7 @@ def ComputeCost(Y, predictions):
     return ce_term
 
 
-def back_pass(RNN, X, activations, labels, h_0=np.zeros(m)):
+def back_pass(RNN, X, activations, labels, h_0=np.zeros((m, 1))):
     # activations[t][0] is a_t, activations[t][1] is h_t, activations[t][2] is x_t
     # Initialize ds thats gonna hold my grads
     del_RNN = {}
@@ -83,7 +83,7 @@ def back_pass(RNN, X, activations, labels, h_0=np.zeros(m)):
     del_a = None
     for t in range(T - 1, -1, -1):
         G = - (labels[:, t].reshape((-1, 1)) - activations[t][2]).T
-        del_RNN['V'] = del_RNN['V'] + G.T @ activations[t][1].T
+        del_RNN['V'] = del_RNN['V'] + (G.T @ activations[t][1].T)
         del_RNN['c'] = del_RNN['c'] + G.T
         if t == T - 1:
             del_h = G @ RNN['V']
@@ -96,7 +96,9 @@ def back_pass(RNN, X, activations, labels, h_0=np.zeros(m)):
             del_RNN['W'] = del_RNN['W'] + del_a.T @ activations[t - 1][1].T
         del_RNN['U'] = del_RNN['U'] + del_a.T @ X[:, t].reshape(-1, 1).T
         del_RNN['b'] = del_RNN['b'] + del_a.T
-        return del_RNN
+    for key in del_RNN.keys():
+        del_RNN[key] = np.clip(del_RNN[key], -5, 5)
+    return del_RNN
 
 
 def forward_pass(RNN, X_chars, Y_chars):

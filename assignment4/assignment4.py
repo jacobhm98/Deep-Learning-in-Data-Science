@@ -1,4 +1,7 @@
+
 import functions
+import numpy as np
+
 
 
 def main():
@@ -6,6 +9,7 @@ def main():
 
 
 def sanity_check_gradients():
+    np.random.seed(0)
     book_data, book_chars = functions.read_in_text('goblet_book.txt')
     functions.K = len(book_chars)
     char_to_int, int_to_char = functions.get_maps(book_chars)
@@ -20,10 +24,7 @@ def sanity_check_gradients():
         activations, loss = functions.forward_pass(RNN, X, Y)
         print(loss)
         del_RNN = functions.back_pass(RNN, X, activations, Y)
-        #for key in del_RNN.keys():
-        #    RNN[key] = RNN[key] - functions.eta * del_RNN[key]
-        RNN['V'] = RNN['V'] - functions.eta * del_RNN['V']
-        RNN['W'] = RNN['W'] - functions.eta * del_RNN['W']
-        RNN['U'] = RNN['U'] - functions.eta * del_RNN['U']
+        for key in del_RNN.keys():
+            RNN[key] = RNN[key] - functions.eta * del_RNN[key]
 
 main()
