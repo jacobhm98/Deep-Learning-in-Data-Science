@@ -96,8 +96,8 @@ def back_pass(RNN, X, activations, labels, h_0=np.zeros((m, 1))):
             del_RNN['W'] = del_RNN['W'] + del_a.T @ activations[t - 1][1].T
         del_RNN['U'] = del_RNN['U'] + del_a.T @ X[:, t].reshape(-1, 1).T
         del_RNN['b'] = del_RNN['b'] + del_a.T
-    for key in del_RNN.keys():
-        del_RNN[key] = np.clip(del_RNN[key], -5, 5)
+        for key in del_RNN.keys():
+            del_RNN[key] = np.clip(del_RNN[key], -5, 5)
     return del_RNN
 
 

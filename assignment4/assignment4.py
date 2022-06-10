@@ -1,7 +1,5 @@
-
 import functions
-import numpy as np
-
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -9,7 +7,6 @@ def main():
 
 
 def sanity_check_gradients():
-    np.random.seed(0)
     book_data, book_chars = functions.read_in_text('goblet_book.txt')
     functions.K = len(book_chars)
     char_to_int, int_to_char = functions.get_maps(book_chars)
@@ -20,11 +17,15 @@ def sanity_check_gradients():
     X = functions.one_hotify(X)
     Y = functions.one_hotify(Y)
     RNN = functions.initialize_parameters()
+    loss_development = []
     for i in range(1000):
         activations, loss = functions.forward_pass(RNN, X, Y)
-        print(loss)
+        loss_development.append(loss)
         del_RNN = functions.back_pass(RNN, X, activations, Y)
         for key in del_RNN.keys():
             RNN[key] = RNN[key] - functions.eta * del_RNN[key]
+    plt.plot(list(range(len(loss_development))), loss_development, label='training loss')
+    plt.show()
+
 
 main()
