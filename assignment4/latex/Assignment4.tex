@@ -5,6 +5,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{listings}
 \graphicspath{{../figures/}}
 \author{Jacob Heden Malm}
 \title{DD2424 Assignment 4}
@@ -20,6 +21,110 @@ Here is an example of the development of the loss values through training on thi
 \includegraphics[width=\textwidth]{sanity_check.png}
 
 As we can see, within 1000 iterations the loss goes from roughly 100 to very close to 0, this would not be possible if we did not successfully implement the gradient calculations for all parameters.
+
+
+\section{Smoothed loss over three epochs}
+
+I implemented AdaGrad and trained my model over 3 run throughs of the entire book. Here is the smoothed loss plot, where each data point is collected every 100th update step:
+
+\includegraphics[width=\textwidth]{smooth_loss_3_epochs.png}
+
+As we can see, the model learns quite quickly, and then much more slowly. As suggested in the assignment document, we can also see hints of the same pattern repeating itself within an epoch. For instance, the relative shape of the section between update step 550 - 900 is quite similar to 900 until the end.
+
+
+\subsection{Text samples}
+
+Here, I trained the model over 100,000 update steps and sampled from the model every 10,000 update steps. The text samples are given here:
+
+\begin{verbatim}
+
+iter 0 smooth loss [109.54119004]
+GENERATED TEXT
+H:üXqf3iavr•7}^/,Do//
+_ktN,K	uwTUXSnFjveU_"P
+AmT^6g:fa(A^zeRHBf",UP21:BEh	•atVITr1IFzIWT(	9cL(0D/1Zue!BvüY22fRUkD}1EwFAu	)gaEI:•QLFSexZ?-jKiLB-"6^nmRjN^nMMEV((pcco
+m0N•bOk02RKL,O
+R/MY
+TW6X	L,(6E^A•T9H
+
+
+iter 10000 smooth loss [60.01478371]
+GENERATED TEXT
+The thand waf sar horchke WotherWyusd nranls?a camerttonto taed oaskeol Cwwe parowspitohe that hitrey oron matl maakly,
+"I..
+"Worest an otl oacen an!, hs, wena nlome in Cfaf tlothar.  th Yf ang aid sn
+
+
+iter 20000 smooth loss [56.63489296]
+GENERATED TEXT
+ mos itrrof to toy boviner, ugoon.!  the gereanly f's thet Round.  Fe'g wink Sorhy tald lumend iad -hea dunt sht irhoud- suadndad dost oret in helreril! son, He out Sowho tus lalare mEmite poor zaid w
+ 
+ 
+iter 30000 smooth loss [55.14227079]
+GENERATED TEXT
+apmo s the thee bake.  Hemring Grothir fir hippeck enterton dis or s'ils igltore" har harrove fard troriag out sas, Gilmers his walk alk stemonbet ases fe nenrise Mkar, Hened bitlr, porutcary in't hor
+
+
+iter 40000 smooth loss [54.06969138]
+GENERATED TEXT
+.  	I sarh irlelerwar bud; he work, fntant.
+RRup sagwe betart.?
+"Yeed'te coed hiw, alde) eg,id ast ooken ze. wain, they . . . ." He te sry win thon co they gons fulit efet.  she baid chou tw or jlene 
+
+
+iter 50000 smooth loss [54.35127042]
+GENERATED TEXT
+ as the hrikengssirte inen chom heriond op ser and to fiared achors stret'll Me -fed ortorly th and as fis rv. coe he.
+TTound hrrthe was - at OWhag to thabliy hist he wise ghe hey oughint an. Wid oule
+
+
+iter 60000 smooth loss [53.22417738]
+GENERATED TEXT
+ Band Quild Mrcporbed the waln, Harry donged Muthen shur, sver, Rot: .  Mrawn ht.  Mo qherriagew sion and wis sthimnevir hermemenat or f uthen wowh thiro Dusspingine daveumch cowh vild Kexmegboon.  Ih
+ 
+ 
+iter 70000 smooth loss [52.60712635]
+GENERATED TEXT
+rass covid," saiz pithel sthe the gove sored liof g andoblled tome of pakiaglly she his Fpong titanandarn, Ms?"
+"Y?v rocking, as,"s apouley -- OAzm got shisind caro w?" Harrmoofed and sfonf a wis they
+
+
+iter 80000 smooth loss [51.20998489]
+GENERATED TEXT
+tole's poremalling fery his there bag un to hed dist loyte the pucry of baigirt romuplt you' rrannsam a veswan, d.
+"Ha bach.
+"Sh ald of mo carir -nacgrede sat hoy singere dofe puingd bein's,  cave sis
+
+
+iter 90000 smooth loss [51.72456782]
+GENERATED TEXT
+lt tce mad thas hely.
+"Ahe dorcired Hirlingad wace the dryoked sevey fhaghive toing Horry ne the "Cmobh pas the coubns.  Ther ex.  Tied Harrn's rokroon, har if leat exmaccy Eors, moltstkackd I veed th
+\end{verbatim}
+
+As we can see, the model quickly becomes much more coherent, and then further improvements are rather gradual.\\
+
+Here comes the text sample that is 1000 characters long from my model with the lowest loss.
+
+\begin{verbatim}
+BEST MODEL TEXT
+ermingont ding.  He. He're in..
+WNomitele s and a ounss arrevorit). W"ary wencuent, tnente, are.
+"Thoy arTho knom ftoving doke woucled fatrrm... Harrid Mer wher witk on - oow on the tarr whathe to collyalk a?
+"He ow. 
+ER,"
+Weakriveale Htrray," see bo dist seanlye senerowing to he sead s of the  op shad it than's aom jupply, Himeen, yer anf sione are fAlmugne, wat tis ot appenouds of pploprevere of.. at us."" hands!"
+"Yaig of.  He wepelaigele it the Cackpace a"ne the toulbs of siidist as whe her bablit, the wasard clabrey toy.  Harry seicefor te a pcyurt, at oGeared My Ig were om. "Tham. 
+"Whing and so herred wlow Ango fr. . . . Dustlous is Krringet! sWeally wiug the sorry, ase thet y?e slowted aid sard wacrat ebet more as Me. Ftell op ino Mo?"
+"Slike.
+I'm.  Henseat feen the fait re's anl.
+
+Ant ofre perela inure aadedinn. "Weminch I'k a verd uver!"
+"Hary.
+ Hairky Ron siad callede bouzacrd gromgor forat thig the meatley ded'thenss rookned, teangeale.  Buntid tatle gould s eave it If an W
+ 
+\end{verbatim}
+
 
 
 

@@ -6,6 +6,7 @@ import numpy as np
 # Constants
 m = 100
 eta = 0.01
+epsilon = 1e-8
 seq_length = 25
 K = None
 
@@ -37,7 +38,7 @@ def synthesize_text(RNN, h0, x0, n):
         _, h_t, p_t = single_forward_pass(RNN, h0, x0)
         cp = np.cumsum(p_t)
         a = random.uniform(0, 1)
-        indices = np.argwhere(cp - a)
+        indices = np.argwhere(cp - a > 0)
         k = indices[0]
         x_next = one_hot(k)
         outputs.append(x_next)
@@ -67,6 +68,61 @@ def int_from_one_hot(vec):
 def ComputeCost(Y, predictions):
     ce_term = - np.log(Y.T @ predictions)
     return ce_term
+
+
+def fit(RNN, book_data, char_to_int, int_to_char, epochs=3):
+    # record keeping
+    e = 0
+    epoch = 0
+    updates = 0
+    smoothed_loss = None
+    loss_development = []
+    h_prev = np.zeros((m, 1))
+    # adagrad params
+    m_RNN = {}
+    m_RNN['b'] = np.zeros((m, 1))
+    m_RNN['c'] = np.zeros((K, 1))
+    m_RNN['U'] = np.zeros((m, K))
+    m_RNN['W'] = np.zeros((m, m))
+    m_RNN['V'] = np.zeros((K, m))
+
+    while updates < 100000:
+        if e + seq_length + 1 > len(book_data):
+            e = 0
+            epoch += 1
+            h_prev = np.zeros((m, 1))
+        X = book_data[e:e + seq_length]
+        Y = book_data[e + 1:e + seq_length + 1]
+        if e + seq_length + 1 <= len(book_data):
+            e += seq_length
+        X = convert_char_list_to_ints(X, char_to_int)
+        Y = convert_char_list_to_ints(Y, char_to_int)
+        X = one_hotify(X)
+        Y = one_hotify(Y)
+
+        activations, loss = forward_pass(RNN, X, Y, h=h_prev)
+        h_prev = activations[-1][1]
+
+        if smoothed_loss is None:
+            smoothed_loss = loss
+        else:
+            smoothed_loss = .999 * smoothed_loss + 0.001 * loss
+        if updates % 100 == 0:
+            loss_development.append(smoothed_loss)
+        if updates % 10000 == 0:
+            generated_text = synthesize_text(RNN, h_prev, X[:, 0], n=200)
+            generated_text = [int_to_char[int_from_one_hot(one_hot)] for one_hot in generated_text]
+            string = ''
+            print('iter', updates, 'smooth loss', smoothed_loss)
+            print('GENERATED TEXT')
+            print(string.join(generated_text))
+
+        del_RNN = back_pass(RNN, X, activations, Y, h_0=h_prev)
+        for key in del_RNN.keys():
+            m_RNN[key] = m_RNN[key] + np.power(del_RNN[key], 2)
+            RNN[key] = RNN[key] - (eta / np.power(epsilon + m_RNN[key], 0.5) * del_RNN[key])
+        updates += 1
+    return RNN, loss_development
 
 
 def back_pass(RNN, X, activations, labels, h_0=np.zeros((m, 1))):
@@ -101,8 +157,7 @@ def back_pass(RNN, X, activations, labels, h_0=np.zeros((m, 1))):
     return del_RNN
 
 
-def forward_pass(RNN, X_chars, Y_chars):
-    h = np.zeros((m, 1))
+def forward_pass(RNN, X_chars, Y_chars, h=np.zeros((m, 1))):
     cost = 0
     activations = []
     n = X_chars.shape[1]
